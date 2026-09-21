@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { calcularRelacaoCcCa, potenciaFinalKwp, sugerirDimensionamento } from './dimensionamento'
+import { calcularAreaEstimada, calcularRelacaoCcCa, potenciaFinalKwp, sugerirDimensionamento } from './dimensionamento'
 
 describe('sugerirDimensionamento', () => {
   it('sugere kWp e quantidade de módulos a partir do consumo anual', () => {
@@ -31,5 +31,15 @@ describe('calcularRelacaoCcCa', () => {
 
   it('classifica como alerta acima de 1.5', () => {
     expect(calcularRelacaoCcCa(8, 5).nivel).toBe('alerta')
+  })
+})
+
+describe('calcularAreaEstimada', () => {
+  it('multiplica quantidade × área do módulo × 1,1 de folga', () => {
+    expect(calcularAreaEstimada(8, 2)).toBeCloseTo(8 * 2 * 1.1, 5)
+  })
+
+  it('retorna null quando o módulo não tem área cadastrada', () => {
+    expect(calcularAreaEstimada(8, null)).toBeNull()
   })
 })
