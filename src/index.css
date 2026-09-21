@@ -1,0 +1,82 @@
+@import '@fontsource/plus-jakarta-sans/400.css';
+@import '@fontsource/plus-jakarta-sans/500.css';
+@import '@fontsource/plus-jakarta-sans/600.css';
+@import '@fontsource/plus-jakarta-sans/700.css';
+@import '@fontsource/plus-jakarta-sans/800.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Sol & Grafite — tema claro (padrão) */
+  --color-graphite: #0f1b2d;
+  --color-ivory: #f7f4ee;
+  --color-surface: #ffffff;
+  --color-sun: #f2a516;
+  --color-sun-soft: #fdf3dc;
+  --color-sun-ink: #5a3d00;
+  --color-muted: #5b6472;
+  --color-muted-dark: #c9cfd8;
+  --color-line: #e6e1d7;
+  --color-line-soft: #efeae0;
+  --color-chip: #f1ede4;
+  --color-bar-neutral: #cfd5de;
+  --color-success: #1e7a50;
+  --color-success-soft: #e3f2ea;
+  --color-danger: #9a3412;
+  --color-danger-soft: #f6e7e2;
+  --color-info: #1d4ed8;
+  --color-info-soft: #e6eef9;
+  --color-neutral-chip: #3a4758;
+  --color-neutral-chip-soft: #eef1f5;
+
+  color-scheme: light;
+}
+
+[data-theme='dark'] {
+  /* Painel administrativo — tema escuro (proposta do cliente nunca usa este bloco) */
+  --color-ivory: #0b1422;
+  --color-surface: #132238;
+  --color-muted: #c9cfd8;
+  --color-line: #223550;
+  --color-line-soft: #1a2c46;
+  --color-chip: #1a2c46;
+
+  color-scheme: dark;
+}
+
+* {
+  transition: background-color 200ms ease, border-color 200ms ease, color 200ms ease;
+}
+
+html {
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+body {
+  margin: 0;
+  background-color: var(--color-ivory);
+  color: var(--color-graphite);
+  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+[data-theme='dark'] body {
+  color: var(--color-ivory);
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 200ms !important;
+  }
+}
