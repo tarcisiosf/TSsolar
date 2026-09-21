@@ -140,6 +140,10 @@ export interface ProposalResultados {
   paybackMesesOtimista: number | null
   custoKwhGerado: number
   relacaoCcCa: number
+  contaAntesMediaMensal: number
+  contaDepoisMediaMensal: number
+  percentualEconomiaMensal: number
+  geracaoMensalKwh: number[]
 }
 
 export interface ProposalVersaoHistorico {

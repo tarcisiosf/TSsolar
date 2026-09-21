@@ -62,6 +62,10 @@ export function toPublicSnapshot(params: ToPublicSnapshotParams): PublicProposal
       paybackMesesOtimista: proposal.resultados.paybackMesesOtimista,
       custoKwhGerado: proposal.resultados.custoKwhGerado,
       relacaoCcCa: proposal.resultados.relacaoCcCa,
+      contaAntesMediaMensal: proposal.resultados.contaAntesMediaMensal,
+      contaDepoisMediaMensal: proposal.resultados.contaDepoisMediaMensal,
+      percentualEconomiaMensal: proposal.resultados.percentualEconomiaMensal,
+      geracaoMensalKwh: proposal.resultados.geracaoMensalKwh,
     },
     precoFinal,
     parcelas: {

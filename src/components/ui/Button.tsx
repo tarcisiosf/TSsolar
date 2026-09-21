@@ -1,13 +1,14 @@
 import { motion, useReducedMotion, type HTMLMotionProps } from 'motion/react'
 import { Loader2 } from 'lucide-react'
-import { forwardRef } from 'react'
+import { forwardRef, type ReactNode } from 'react'
 
 type Variant = 'primary' | 'secondary' | 'dark'
 
-interface ButtonProps extends Omit<HTMLMotionProps<'button'>, 'ref'> {
+interface ButtonProps extends Omit<HTMLMotionProps<'button'>, 'ref' | 'children'> {
   variant?: Variant
   loading?: boolean
   fullWidth?: boolean
+  children?: ReactNode
 }
 
 const variantClasses: Record<Variant, string> = {

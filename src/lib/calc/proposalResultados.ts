@@ -1,7 +1,9 @@
 import type { CalcSettings, ProposalEntrada, ProposalItem, ProposalPrecificacao, ProposalResultados, ProposalServicos, ProposalSistema } from '@/types/firestore'
 import { calcularCenario, calcularCustoKwhGerado } from './cenarios'
 import { calcularConsumoMedioMensal } from './consumo'
+import { calcularContaComSistemaMes, calcularContaSemSistemaMes, percentualFioBPorAno } from './contaComSistema'
 import { calcularRelacaoCcCa } from './dimensionamento'
+import { gerarGeracaoMensal } from './geracao'
 import { calcularPrecificacao } from './precificacao'
 
 export interface CalcularResultadosPropostaInput {
@@ -63,6 +65,30 @@ export function calcularResultadosProposta(input: CalcularResultadosPropostaInpu
   const geracaoMediaMensalKwh = (sistema.potenciaKwp * calc.produtividadeKwhKwpAno) / 12
   const custoKwhGerado = calcularCustoKwhGerado(precificacaoResultado.precoFinal, conservador.geracaoTotalKwh)
 
+  // Conta "antes x depois" do ano 1, para a manchete de economia real da proposta pública.
+  const geracaoMensalAno1 = gerarGeracaoMensal(sistema.potenciaKwp, calc.produtividadeKwhKwpAno, calc.distribuicaoMensal, 1, calc.degradacaoAnual)
+  const percentualFioBAno1 = percentualFioBPorAno(anoCalendarioInicial, calc.fioBPercentualPorAno)
+  let contaAntesTotal = 0
+  let contaDepoisTotal = 0
+  for (let mes = 0; mes < 12; mes++) {
+    const consumoMes = consumoMensalKwh[mes] ?? 0
+    contaAntesTotal += calcularContaSemSistemaMes(consumoMes, entrada.tarifaKwh, calc.iluminacaoPublica)
+    contaDepoisTotal += calcularContaComSistemaMes({
+      consumoKwh: consumoMes,
+      geracaoKwh: geracaoMensalAno1[mes],
+      tarifaKwh: entrada.tarifaKwh,
+      fioBKwh: calc.fioBKwh,
+      percentualFioB: percentualFioBAno1,
+      fatorSimultaneidade: calc.fatorSimultaneidade,
+      ligacao: entrada.ligacao,
+      custoDisponibilidadeKwh: calc.custoDisponibilidadeKwh,
+      iluminacaoPublica: calc.iluminacaoPublica,
+    })
+  }
+  const contaAntesMediaMensal = contaAntesTotal / 12
+  const contaDepoisMediaMensal = contaDepoisTotal / 12
+  const percentualEconomiaMensal = contaAntesMediaMensal > 0 ? (contaAntesMediaMensal - contaDepoisMediaMensal) / contaAntesMediaMensal : 0
+
   return {
     precoFinal: precificacaoResultado.precoFinal,
     resultados: {
@@ -79,6 +105,10 @@ export function calcularResultadosProposta(input: CalcularResultadosPropostaInpu
       paybackMesesOtimista: otimista.paybackMeses,
       custoKwhGerado,
       relacaoCcCa,
+      contaAntesMediaMensal,
+      contaDepoisMediaMensal,
+      percentualEconomiaMensal,
+      geracaoMensalKwh: geracaoMensalAno1,
     },
   }
 }

@@ -7,7 +7,17 @@ import type { Client } from '@/types/firestore'
 
 const VAZIO: ClientInput = { nome: '', telefone: '', email: '', cidade: '', endereco: '', observacoes: '' }
 
-export function ClientSheet({ open, onClose, client, onCreated }: { open: boolean; onClose: () => void; client: Client | null; onCreated?: (id: string) => void }) {
+export function ClientSheet({
+  open,
+  onClose,
+  client,
+  onCreated,
+}: {
+  open: boolean
+  onClose: () => void
+  client: Client | null
+  onCreated?: (id: string, input: ClientInput) => void
+}) {
   const [form, setForm] = useState<ClientInput>(client ?? VAZIO)
   const [salvando, setSalvando] = useState(false)
 
@@ -26,7 +36,7 @@ export function ClientSheet({ open, onClose, client, onCreated }: { open: boolea
         await updateClient(client.id, form)
       } else {
         const id = await createClient(form)
-        onCreated?.(id)
+        onCreated?.(id, form)
       }
       onClose()
     } finally {
