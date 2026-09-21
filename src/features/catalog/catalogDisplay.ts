@@ -15,10 +15,15 @@ const PADROES: Record<CategoriaCatalogo, CatalogItemInput> = {
   outro: { categoria: 'outro', unidade: '', descricao: '', custoUnitario: 0, ativo: true },
 }
 
+type CatalogItemInputFor<C extends CategoriaCatalogo> = Extract<CatalogItemInput, { categoria: C }>
+
 /** Valores padrão ao trocar de categoria no formulário — preserva custo/ativo se informados. */
-export function defaultCatalogItemInput(categoria: CategoriaCatalogo, preservar?: { custoUnitario: number; ativo: boolean }): CatalogItemInput {
-  const padrao = PADROES[categoria]
-  return preservar ? { ...padrao, custoUnitario: preservar.custoUnitario, ativo: preservar.ativo } : padrao
+export function defaultCatalogItemInput<C extends CategoriaCatalogo>(
+  categoria: C,
+  preservar?: { custoUnitario: number; ativo: boolean },
+): CatalogItemInputFor<C> {
+  const padrao = PADROES[categoria] as CatalogItemInputFor<C>
+  return preservar ? ({ ...padrao, custoUnitario: preservar.custoUnitario, ativo: preservar.ativo } as CatalogItemInputFor<C>) : padrao
 }
 
 /** Nome exibido, gerado a partir da categoria e dos campos específicos — nunca digitado à mão. */
