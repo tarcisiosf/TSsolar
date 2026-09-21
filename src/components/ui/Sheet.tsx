@@ -77,7 +77,7 @@ export function Sheet({ open, onClose, title, children, footer, isDirty }: Sheet
             dragConstraints={{ top: 0, bottom: 0 }}
             dragElastic={{ top: 0.15, bottom: 0.6 }}
             onDragEnd={(_, info) => {
-              if (info.offset.y > 120 || info.velocity.y > 500) onClose()
+              if (info.offset.y > 120 || info.velocity.y > 500) attemptClose()
             }}
             initial={{ y: '100%' }}
             animate={{ y: 0 }}
