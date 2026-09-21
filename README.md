@@ -6,7 +6,9 @@ Esta é a **Fase 1**: cadastro, orçamento, geração de proposta (link público
 
 ## Stack
 
-Vite + React 18 + TypeScript (strict) · Tailwind CSS · Firebase (Auth, Firestore, Storage, Hosting) · React Router · Motion · Recharts · react-hook-form + zod · @react-pdf/renderer · date-fns (ptBR) · lucide-react.
+Vite + React 18 + TypeScript (strict) · Tailwind CSS · Firebase (Auth, Firestore, Hosting — sem Storage, de propósito: ver nota abaixo) · React Router · Motion · Recharts · react-hook-form + zod · @react-pdf/renderer · date-fns (ptBR) · lucide-react.
+
+> **Por que sem Firebase Storage?** Desde out/2024 o Google exige o plano Blaze (pay-as-you-go) para ativar o Storage, mesmo dentro da faixa gratuita. Para manter o projeto 100% no plano Spark (gratuito), a logo da empresa usa uma **URL externa opcional** (cole o link de uma imagem já hospedada em qualquer lugar, em Configurações) — sem logo, a proposta usa o sol do `DESIGN.md`.
 
 ## 1. Criar o projeto no Firebase
 
@@ -14,8 +16,7 @@ Vite + React 18 + TypeScript (strict) · Tailwind CSS · Firebase (Auth, Firesto
 2. **Authentication** → Sign-in method → ative **E-mail/senha**.
 3. **Authentication** → Users → adicione o usuário admin (seu e-mail e uma senha). Esse é o e-mail que vai identificar o dono do sistema.
 4. **Firestore Database** → crie o banco (modo produção, região `southamerica-east1` ou a mais próxima de Goiânia).
-5. **Storage** → ative o Storage (mesma região).
-6. **Configurações do projeto** → Geral → em "Seus apps", crie um app da Web e copie as credenciais (`apiKey`, `authDomain`, `projectId`, `storageBucket`, `messagingSenderId`, `appId`).
+5. **Configurações do projeto** → Geral → em "Seus apps", crie um app da Web e copie as credenciais (`apiKey`, `authDomain`, `projectId`, `messagingSenderId`, `appId`).
 
 ## 2. Configurar o ambiente local
 
@@ -30,13 +31,12 @@ Preencha o `.env.local` com as credenciais do passo anterior e o e-mail do admin
 VITE_FIREBASE_API_KEY=...
 VITE_FIREBASE_AUTH_DOMAIN=...
 VITE_FIREBASE_PROJECT_ID=...
-VITE_FIREBASE_STORAGE_BUCKET=...
 VITE_FIREBASE_MESSAGING_SENDER_ID=...
 VITE_FIREBASE_APP_ID=...
 VITE_ADMIN_EMAIL=seuemail@tssolar.com.br
 ```
 
-**Importante:** as regras do Firestore (`firestore.rules`) e do Storage (`storage.rules`) não leem variáveis de ambiente — abra os dois arquivos e troque `ADMIN_EMAIL_PLACEHOLDER` pelo mesmo e-mail que você colocou em `VITE_ADMIN_EMAIL`.
+**Importante:** as regras do Firestore (`firestore.rules`) não leem variáveis de ambiente — abra o arquivo e troque `ADMIN_EMAIL_PLACEHOLDER` pelo mesmo e-mail que você colocou em `VITE_ADMIN_EMAIL`.
 
 ## 3. Rodar localmente
 
@@ -61,7 +61,7 @@ firebase use --add   # selecione o projeto criado no passo 1
 Depois, publique as regras e o site:
 
 ```bash
-firebase deploy --only firestore:rules,firestore:indexes,storage
+firebase deploy --only firestore:rules,firestore:indexes
 npm run deploy        # roda "npm run build" e depois "firebase deploy" (Hosting)
 ```
 
@@ -91,7 +91,7 @@ npm run deploy        # roda "npm run build" e depois "firebase deploy" (Hosting
 
 - **Índices do Firestore**: se alguma consulta pedir um índice composto ao rodar, o console do Firebase mostra um link para criá-lo automaticamente (já deixamos os previsíveis em `firestore.indexes.json`, rode `firebase deploy --only firestore:indexes` para aplicá-los).
 - **Domínio próprio**: configure em Hosting → Domínio personalizado, se for usar um domínio da TS Solar em vez do `*.web.app`.
-- **Logo da empresa**: opcional — sem ela, o sistema usa o sol de `DESIGN.md` como logo.
+- **Logo da empresa**: opcional — cole uma URL de imagem já hospedada em Configurações; sem ela, o sistema usa o sol de `DESIGN.md`.
 - **Fase 2 (Financeiro)** e **Fase 3 (Operação)**: os tipos de dados já existem (`ProjectRecord`, `FixedCost`) mas as telas ainda não foram construídas.
 
 ## Limitações conhecidas desta fase

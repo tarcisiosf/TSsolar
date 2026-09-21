@@ -1,11 +1,9 @@
-import { getDownloadURL, ref, uploadBytes } from 'firebase/storage'
-import { Plus, Trash2, Upload } from 'lucide-react'
+import { Plus, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { Input } from '@/components/ui/Input'
 import { SavedIndicator, type SaveStatus } from '@/components/ui/SavedIndicator'
-import { storage } from '@/lib/firebase'
 import { saveCompanySettings } from '@/lib/data/settings'
 import { onlyDigits } from '@/lib/format'
 import type { CompanySettings } from '@/types/firestore'
@@ -13,7 +11,6 @@ import type { CompanySettings } from '@/types/firestore'
 export function CompanyForm({ initial }: { initial: CompanySettings }) {
   const [form, setForm] = useState<CompanySettings>(initial)
   const [status, setStatus] = useState<SaveStatus>('idle')
-  const [enviandoLogo, setEnviandoLogo] = useState(false)
   const [novoServico, setNovoServico] = useState('')
 
   function set<K extends keyof CompanySettings>(key: K, value: CompanySettings[K]) {
@@ -27,24 +24,6 @@ export function CompanyForm({ initial }: { initial: CompanySettings }) {
       setStatus('saved')
     } catch {
       setStatus('error')
-    }
-  }
-
-  async function handleLogoChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
-    if (!file) return
-    if (!['image/png', 'image/svg+xml'].includes(file.type)) {
-      alert('Envie um arquivo PNG ou SVG.')
-      return
-    }
-    setEnviandoLogo(true)
-    try {
-      const storageRef = ref(storage, `company/logo-${Date.now()}.${file.type === 'image/svg+xml' ? 'svg' : 'png'}`)
-      await uploadBytes(storageRef, file)
-      const url = await getDownloadURL(storageRef)
-      set('logoUrl', url)
-    } finally {
-      setEnviandoLogo(false)
     }
   }
 
@@ -76,13 +55,15 @@ export function CompanyForm({ initial }: { initial: CompanySettings }) {
             <span className="text-xs text-muted">Sem logo</span>
           )}
         </div>
-        <label className="cursor-pointer">
-          <span className="inline-flex items-center gap-2 rounded-button border border-[#D9D3C7] bg-surface px-4 py-2.5 text-sm font-bold text-graphite hover:bg-chip">
-            <Upload className="h-4 w-4" aria-hidden />
-            {enviandoLogo ? 'Enviando…' : 'Enviar logo (PNG ou SVG)'}
-          </span>
-          <input type="file" accept="image/png,image/svg+xml" className="hidden" onChange={handleLogoChange} disabled={enviandoLogo} />
-        </label>
+        <div className="flex-1">
+          <Input
+            label="URL da logo"
+            hint="Opcional — cole o link de uma imagem já hospedada (PNG ou SVG). Sem isso, a proposta usa o sol do DESIGN.md."
+            value={form.logoUrl ?? ''}
+            onChange={(e) => set('logoUrl', e.target.value || null)}
+            placeholder="https://…"
+          />
+        </div>
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
