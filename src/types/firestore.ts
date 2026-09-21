@@ -182,6 +182,8 @@ export interface PublicProposalEmpresa {
   logoUrl: string | null
 }
 
+export type PublicProposalResultados = Omit<ProposalResultados, 'custoTotal' | 'lucroEstimado' | 'margemResultante'>
+
 export interface PublicProposal {
   publicId: string
   numero: string
@@ -193,7 +195,7 @@ export interface PublicProposal {
   entrada: Pick<ProposalEntrada, 'consumoMedioKwh' | 'consumoMensalKwh' | 'contaAtual' | 'ligacao'>
   sistema: ProposalSistema
   itens: Pick<ProposalItem, 'id' | 'descricao' | 'especificacao' | 'quantidade' | 'unidade' | 'status'>[]
-  resultados: ProposalResultados
+  resultados: PublicProposalResultados
   precoFinal: number
   parcelas: {
     cartao: { valor: number; parcelas: number }
