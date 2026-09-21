@@ -81,7 +81,7 @@ export function ProposalView({ proposal, onBaixarPdf, preview }: ProposalViewPro
             <HeroStat label="Potência" value={formatKwp(proposal.sistema.potenciaKwp)} />
             <HeroStat label="Geração média" value={formatKwh(proposal.resultados.geracaoMediaMensalKwh) + '/mês'} />
             <HeroStat label="Módulos" value={String(proposal.sistema.qtdModulos)} />
-            <HeroStat label="Área estimada" value={`${formatNumber(proposal.sistema.areaM2, 1)} m²`} />
+            <HeroStat label="Área estimada" value={proposal.sistema.areaM2 != null ? `${formatNumber(proposal.sistema.areaM2, 1)} m²` : '—'} />
           </div>
         </section>
 

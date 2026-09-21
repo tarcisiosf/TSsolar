@@ -60,7 +60,7 @@ export function criarPropostaVazia(id: string, client: Pick<Client, 'id' | 'nome
       tipoTelhado: '',
       observacoes: '',
     },
-    sistema: { potenciaKwp: 0, qtdModulos: 0, moduloId: null, inversorId: null, areaM2: 0 },
+    sistema: { potenciaKwp: 0, qtdModulos: 0, moduloId: null, inversorId: null, areaM2: null },
     itens: [],
     servicos: SERVICOS_VAZIOS,
     precificacao: { modo: 'margem', margem: 0.25, comissao: 0, precoFinal: 0 },
@@ -203,7 +203,7 @@ export function itemVazio(): ProposalItem {
     descricao: '',
     especificacao: '',
     quantidade: 1,
-    unidade: 'un',
+    unidade: 'unidades',
     custoUnitario: 0,
     status: 'incluso',
   }

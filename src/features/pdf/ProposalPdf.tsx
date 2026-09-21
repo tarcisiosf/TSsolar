@@ -119,7 +119,9 @@ export function ProposalPdf({ proposal }: { proposal: PublicProposal }) {
             </View>
             <View style={[styles.statBox, { marginRight: 0 }]}>
               <Text style={[styles.statLabel, { color: cores.ivory }]}>Área estimada</Text>
-              <Text style={{ color: cores.ivory, fontSize: 11, fontWeight: 800 }}>{formatNumber(proposal.sistema.areaM2, 1)} m²</Text>
+              <Text style={{ color: cores.ivory, fontSize: 11, fontWeight: 800 }}>
+                {proposal.sistema.areaM2 != null ? `${formatNumber(proposal.sistema.areaM2, 1)} m²` : '—'}
+              </Text>
             </View>
           </View>
         </View>
