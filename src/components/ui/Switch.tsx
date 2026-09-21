@@ -5,10 +5,11 @@ interface SwitchProps {
   checked: boolean
   onChange: (checked: boolean) => void
   id?: string
+  ariaLabel?: string
 }
 
 /** Switch acessível com alvo de toque de 44px mesmo com a trilha visual menor. */
-export function Switch({ label, checked, onChange, id }: SwitchProps) {
+export function Switch({ label, checked, onChange, id, ariaLabel }: SwitchProps) {
   const autoId = useId()
   const switchId = id ?? autoId
 
@@ -22,6 +23,7 @@ export function Switch({ label, checked, onChange, id }: SwitchProps) {
         type="button"
         role="switch"
         aria-checked={checked}
+        aria-label={ariaLabel}
         onClick={() => onChange(!checked)}
         className={`relative flex h-11 w-11 shrink-0 items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sun focus-visible:ring-offset-2`}
       >
