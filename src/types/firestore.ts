@@ -1,8 +1,13 @@
 import type { Timestamp } from 'firebase/firestore'
 
 export type Ligacao = 'mono' | 'bi' | 'tri'
-export type CategoriaCatalogo = 'modulo' | 'inversor' | 'estrutura' | 'cabo' | 'stringbox' | 'protecao' | 'outro'
-export type UnidadeCatalogo = 'un' | 'm' | 'kit'
+export type CategoriaCatalogo = 'modulo' | 'inversor' | 'estrutura' | 'cabo' | 'mc4' | 'stringbox' | 'protecao' | 'outro'
+export type UnidadeCatalogo = 'un' | 'modulo' | 'm' | 'par'
+export type TipoInversor = 'string' | 'micro' | 'hibrido'
+export type TipoTelhado = 'ceramico' | 'fibrocimento' | 'metalico' | 'laje' | 'solo'
+export type TipoCabo = 'cc_solar' | 'ca'
+export type TipoProtecao = 'disjuntor' | 'dps'
+export type BitolaCaboMm2 = 4 | 6 | 10 | 16
 export type StatusItem = 'incluso' | 'fornecido_cliente' | 'nao_incluso'
 export type StatusProposta = 'rascunho' | 'enviada' | 'negociacao' | 'fechada' | 'perdida'
 export type ModoPrecificacao = 'margem' | 'manual'
@@ -53,22 +58,88 @@ export interface CalcSettings {
   proximoNumero: number
 }
 
-export interface CatalogItem {
+interface CatalogItemBase {
   id: string
-  categoria: CategoriaCatalogo
-  marca: string
-  modelo: string
-  potenciaW: number | null
-  unidade: UnidadeCatalogo
+  nome: string
   custoUnitario: number
-  garantiaDefeitos: string
-  garantiaEficiencia: string
-  monitoramento: string
-  fase: string
   ativo: boolean
   criadoEm: Timestamp
   atualizadoEm: Timestamp
 }
+
+export interface CatalogItemModulo extends CatalogItemBase {
+  categoria: 'modulo'
+  unidade: 'un'
+  marca: string
+  potenciaWp: number
+  areaM2: number | null
+  garantiaProdutoAnos: number | null
+  garantiaPerformanceAnos: number | null
+}
+
+export interface CatalogItemInversor extends CatalogItemBase {
+  categoria: 'inversor'
+  unidade: 'un'
+  marca: string
+  tipo: TipoInversor
+  potenciaKw: number
+  fase: Ligacao
+  monitoramentoWifi: boolean
+  garantiaAnos: number | null
+}
+
+export interface CatalogItemEstrutura extends CatalogItemBase {
+  categoria: 'estrutura'
+  unidade: 'modulo'
+  marca: string
+  tipoTelhado: TipoTelhado
+}
+
+export interface CatalogItemCabo extends CatalogItemBase {
+  categoria: 'cabo'
+  unidade: 'm'
+  tipo: TipoCabo
+  bitolaMm2: BitolaCaboMm2
+}
+
+export interface CatalogItemMc4 extends CatalogItemBase {
+  categoria: 'mc4'
+  unidade: 'par'
+  marca: string
+}
+
+export interface CatalogItemStringBox extends CatalogItemBase {
+  categoria: 'stringbox'
+  unidade: 'un'
+  marca: string
+  entradas: number
+}
+
+export interface CatalogItemProtecao extends CatalogItemBase {
+  categoria: 'protecao'
+  unidade: 'un'
+  tipo: TipoProtecao
+  correnteA: number
+}
+
+export interface CatalogItemOutro extends CatalogItemBase {
+  categoria: 'outro'
+  unidade: string
+  descricao: string
+}
+
+export type CatalogItem =
+  | CatalogItemModulo
+  | CatalogItemInversor
+  | CatalogItemEstrutura
+  | CatalogItemCabo
+  | CatalogItemMc4
+  | CatalogItemStringBox
+  | CatalogItemProtecao
+  | CatalogItemOutro
+
+/** `Omit` que distribui sobre uniões discriminadas (o `Omit` nativo colapsa em `keyof` da união e quebraria o discriminante). */
+export type DistributiveOmit<T, K extends PropertyKey> = T extends unknown ? Omit<T, K> : never
 
 export interface Client {
   id: string
@@ -96,7 +167,7 @@ export interface ProposalSistema {
   qtdModulos: number
   moduloId: string | null
   inversorId: string | null
-  areaM2: number
+  areaM2: number | null
 }
 
 export interface ProposalItem {
@@ -105,7 +176,7 @@ export interface ProposalItem {
   descricao: string
   especificacao: string
   quantidade: number
-  unidade: UnidadeCatalogo
+  unidade: string
   custoUnitario: number
   status: StatusItem
 }
