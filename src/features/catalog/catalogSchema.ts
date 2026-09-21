@@ -41,7 +41,7 @@ const caboSchema = z.object({
   categoria: z.literal('cabo'),
   unidade: z.literal('m'),
   tipo: z.enum(['cc_solar', 'ca']),
-  bitolaMm2: z.union(BITOLAS_CABO.map((b) => z.literal(b)) as [z.ZodLiteral<number>, ...z.ZodLiteral<number>[]]),
+  bitolaMm2: z.union(BITOLAS_CABO.map((b) => z.literal(b)) as [z.ZodLiteral<number>, z.ZodLiteral<number>, ...z.ZodLiteral<number>[]]),
   ...base,
 })
 
