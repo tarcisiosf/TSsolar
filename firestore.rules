@@ -11,7 +11,7 @@ service cloud.firestore {
     // A comparação de e-mail exige que o token já tenha sido emitido para esse endereço.
     function isAdmin() {
       return isSignedIn() && (
-        request.auth.token.email == "ADMIN_EMAIL_PLACEHOLDER" ||
+        request.auth.token.email == "tarcisiofilho129@gmail.com" ||
         exists(/databases/$(database)/documents/admins/$(request.auth.uid))
       );
     }

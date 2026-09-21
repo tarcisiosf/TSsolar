@@ -8,7 +8,7 @@ service firebase.storage {
 
     function isAdmin() {
       return isSignedIn() && (
-        request.auth.token.email == "ADMIN_EMAIL_PLACEHOLDER" ||
+        request.auth.token.email == "tarcisiofilho129@gmail.com" ||
         firestore.exists(/databases/(default)/documents/admins/$(request.auth.uid))
       );
     }
