@@ -1,0 +1,21 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "proposals",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "criadoEm", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "catalog",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "categoria", "order": "ASCENDING" },
+        { "fieldPath": "ativo", "order": "ASCENDING" }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}

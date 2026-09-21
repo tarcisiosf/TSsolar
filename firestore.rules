@@ -1,0 +1,60 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // Admin = e-mail definido em VITE_ADMIN_EMAIL (custom claim/token) OU uid listado em admins/{uid}.
+    // A comparação de e-mail exige que o token já tenha sido emitido para esse endereço.
+    function isAdmin() {
+      return isSignedIn() && (
+        request.auth.token.email == "ADMIN_EMAIL_PLACEHOLDER" ||
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      );
+    }
+
+    match /admins/{uid} {
+      allow read, write: if isAdmin();
+    }
+
+    match /settings/{docId} {
+      allow read, write: if isAdmin();
+    }
+
+    match /catalog/{itemId} {
+      allow read, write: if isAdmin();
+    }
+
+    match /clients/{clientId} {
+      allow read, write: if isAdmin();
+    }
+
+    match /proposals/{proposalId} {
+      allow read, write: if isAdmin();
+    }
+
+    // Snapshot público: qualquer pessoa com o link pode abrir (get), mas ninguém
+    // pode listar todas as propostas (list proibido). Só o admin escreve.
+    match /publicProposals/{publicId} {
+      allow get: if true;
+      allow list: if false;
+      allow write: if isAdmin();
+    }
+
+    // Fase 2 — já protegido, mesmo sem UI ainda
+    match /projects/{projectId} {
+      allow read, write: if isAdmin();
+    }
+
+    match /fixedCosts/{costId} {
+      allow read, write: if isAdmin();
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
