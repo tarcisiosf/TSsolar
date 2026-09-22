@@ -14,7 +14,7 @@ import { gerarNomeCatalogItem } from '@/features/catalog/catalogDisplay'
 
 const catalogCollection = collection(db, 'catalog')
 
-export type CatalogItemInput = DistributiveOmit<CatalogItem, 'id' | 'nome' | 'criadoEm' | 'atualizadoEm'>
+export type CatalogItemInput = DistributiveOmit<CatalogItem, 'id' | 'nome' | 'criadoEm' | 'atualizadoEm' | 'custoPorMetro'>
 
 export function subscribeCatalog(onData: (itens: CatalogItem[]) => void) {
   return onSnapshot(query(catalogCollection), (snap) => {
