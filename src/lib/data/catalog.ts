@@ -16,9 +16,10 @@ const catalogCollection = collection(db, 'catalog')
 
 export type CatalogItemInput = DistributiveOmit<CatalogItem, 'id' | 'nome' | 'criadoEm' | 'atualizadoEm' | 'custoPorMetro'>
 
-function comCamposDerivados(input: CatalogItemInput): Record<string, unknown> {
+export function comCamposDerivados(input: CatalogItemInput): Record<string, unknown> {
   const patch: Record<string, unknown> = { ...input, nome: gerarNomeCatalogItem(input) }
   if (input.categoria === 'cabo') patch.custoPorMetro = calcularCustoPorMetro(input)
+  if (input.categoria === 'estrutura') patch.unidade = input.formaVenda === 'unidade' ? 'un' : input.formaVenda
   return patch
 }
 

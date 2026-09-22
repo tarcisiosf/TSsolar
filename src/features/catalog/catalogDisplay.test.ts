@@ -197,4 +197,22 @@ describe('normalizarCatalogItem', () => {
     const modulo = comBase({ categoria: 'modulo', unidade: 'un', marca: 'X', potenciaWp: 550, areaM2: null, larguraM: null, tecnologia: null, garantiaProdutoAnos: null, garantiaPerformanceAnos: null, custoUnitario: 700, ativo: true }) as unknown as CatalogItem
     expect(normalizarCatalogItem(modulo)).toEqual(modulo)
   })
+
+  it('trata documento antigo de cabo (sem apresentacao) preenchendo os campos novos', () => {
+    const legado = comBase({
+      categoria: 'cabo',
+      unidade: 'm',
+      tipo: 'cc_solar',
+      bitolaMm2: 6,
+      custoUnitario: 4.5,
+      ativo: true,
+    }) as unknown as CatalogItem
+    expect(normalizarCatalogItem(legado)).toMatchObject({
+      categoria: 'cabo',
+      cor: 'outro',
+      apresentacao: 'metro',
+      metrosPorRolo: null,
+      custoPorMetro: 4.5,
+    })
+  })
 })

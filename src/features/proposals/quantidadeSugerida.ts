@@ -22,7 +22,8 @@ export function quantidadeSugerida(
       return quantidadePadraoKit ?? 1
     case 'estrutura': {
       const modulo = catalogo.find((c) => c.id === sistema.moduloId)
-      const larguraModuloM = (modulo && modulo.categoria === 'modulo' ? modulo.larguraM : null) ?? calcSettings.larguraModuloPadraoM
+      const larguraCatalogo = modulo && modulo.categoria === 'modulo' ? modulo.larguraM : null
+      const larguraModuloM = larguraCatalogo != null && larguraCatalogo > 0 ? larguraCatalogo : calcSettings.larguraModuloPadraoM
       const sugestao = quantidadeSugeridaEstrutura(item, sistema.qtdModulos || 0, larguraModuloM, {
         larguraModuloPadraoM: calcSettings.larguraModuloPadraoM,
         espacamentoHookM: calcSettings.espacamentoHookM,

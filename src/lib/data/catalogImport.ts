@@ -1,6 +1,6 @@
 import { doc, getDoc, serverTimestamp, writeBatch } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
-import { calcularCustoPorMetro, gerarNomeCatalogItem } from '@/features/catalog/catalogDisplay'
+import { comCamposDerivados } from './catalog'
 import type { CatalogItemInput } from './catalog'
 import type { KitInput } from './kits'
 
@@ -114,8 +114,7 @@ export async function importarItensDistribuidor(): Promise<{ itensCriados: numbe
     const ref = doc(db, 'catalog', id)
     const existente = await getDoc(ref)
     if (existente.exists()) continue
-    const patch: Record<string, unknown> = { ...input, nome: gerarNomeCatalogItem(input) }
-    if (input.categoria === 'cabo') patch.custoPorMetro = calcularCustoPorMetro(input)
+    const patch = comCamposDerivados(input)
     batch.set(ref, { ...patch, criadoEm: serverTimestamp(), atualizadoEm: serverTimestamp() })
     itensCriados++
   }

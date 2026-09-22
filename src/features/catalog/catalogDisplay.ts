@@ -113,9 +113,9 @@ export function calcularCustoPorMetro(input: { apresentacao: ApresentacaoCabo; c
   return input.custoUnitario / input.metrosPorRolo
 }
 
-/** Documentos antigos da categoria 'estrutura' não têm tipoPeca (formato pré-reforma do
- * catálogo). Normaliza em memória para tipoPeca='kit_completo', sem tocar no Firestore — se o
- * item for reaberto e salvo, passa a gravar no formato novo. */
+/** Documentos antigos de 'estrutura' (sem tipoPeca) ou de 'cabo' (sem apresentacao) são de
+ * formatos pré-reforma do catálogo. Normaliza em memória, sem tocar no Firestore — se o item
+ * for reaberto e salvo, passa a gravar no formato novo. */
 export function normalizarCatalogItem(raw: CatalogItem): CatalogItem {
   const bruto = raw as unknown as Record<string, unknown>
   if (raw.categoria === 'estrutura' && !('tipoPeca' in bruto)) {
@@ -127,6 +127,15 @@ export function normalizarCatalogItem(raw: CatalogItem): CatalogItem {
       formaVenda: 'unidade',
       pecasPorPacote: null,
       unidade: 'un',
+    } as CatalogItem
+  }
+  if (raw.categoria === 'cabo' && !('apresentacao' in bruto)) {
+    return {
+      ...bruto,
+      cor: 'outro',
+      apresentacao: 'metro',
+      metrosPorRolo: null,
+      custoPorMetro: bruto.custoUnitario as number,
     } as CatalogItem
   }
   return raw

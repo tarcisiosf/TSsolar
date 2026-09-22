@@ -90,7 +90,11 @@ export function MateriaisStep({ itens, onChange, sistema, catalogo, kits, calc }
       const existente = novosItens.find((i) => i.catalogId === catalogItem.id)
       if (existente) {
         const quantidade = quantidadeSugerida(catalogItem, sistema, catalogo, calc, kitItem.quantidadePadrao)
-        novosItens = novosItens.map((i) => (i.id === existente.id ? { ...i, quantidade: i.quantidade + quantidade } : i))
+        const quantidadeFinal =
+          catalogItem.categoria === 'modulo' || catalogItem.categoria === 'inversor'
+            ? Math.max(existente.quantidade, quantidade)
+            : existente.quantidade + quantidade
+        novosItens = novosItens.map((i) => (i.id === existente.id ? { ...i, quantidade: quantidadeFinal } : i))
       } else {
         novosItens = [...novosItens, itemDeCatalogo(catalogItem, sistema, catalogo, calc, kitItem.quantidadePadrao)]
       }

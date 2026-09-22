@@ -61,7 +61,7 @@ export async function getCalcSettings(): Promise<CalcSettings> {
     await setDoc(calcRef, DEFAULT_CALC)
     return DEFAULT_CALC
   }
-  return snap.data() as CalcSettings
+  return { ...DEFAULT_CALC, ...snap.data() } as CalcSettings
 }
 
 export function subscribeCompanySettings(onData: (settings: CompanySettings) => void) {
@@ -72,7 +72,7 @@ export function subscribeCompanySettings(onData: (settings: CompanySettings) => 
 
 export function subscribeCalcSettings(onData: (settings: CalcSettings) => void) {
   return onSnapshot(calcRef, (snap) => {
-    if (snap.exists()) onData(snap.data() as CalcSettings)
+    if (snap.exists()) onData({ ...DEFAULT_CALC, ...snap.data() } as CalcSettings)
   })
 }
 

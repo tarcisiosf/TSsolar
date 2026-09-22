@@ -101,6 +101,14 @@ describe('quantidadeSugerida', () => {
     expect(quantidadeSugerida(perfil, sistemaSemModulo, [MODULO], CALC)).toBe(11)
   })
 
+  it('estrutura com módulo encontrado mas sem largura cadastrada usa a largura padrão', () => {
+    const moduloSemLargura: CatalogItem = { ...MODULO, id: 'modulo-2', larguraM: null }
+    const sistemaComModuloSemLargura: ProposalSistema = { ...SISTEMA, moduloId: 'modulo-2' }
+    const perfil = estrutura({ tipoPeca: 'perfil', formaVenda: 'barra', pecasPorPacote: null, unidade: 'barra' })
+    // N=10, módulo encontrado mas larguraM=null -> cai no padrão de Configurações, 1,15 m -> total 23 m -> ceil(23/2.4)+1 = 11
+    expect(quantidadeSugerida(perfil, sistemaComModuloSemLargura, [MODULO, moduloSemLargura], CALC)).toBe(11)
+  })
+
   it('kit_completo (item legado) cai no fallback do número de módulos', () => {
     const legado = estrutura({ tipoPeca: 'kit_completo', formaVenda: 'unidade', pecasPorPacote: null, unidade: 'un' })
     expect(quantidadeSugerida(legado, SISTEMA, [MODULO], CALC)).toBe(10)

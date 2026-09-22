@@ -65,7 +65,7 @@ export function KitsTab({ catalogo }: { catalogo: CatalogItem[] }) {
         ))}
       </div>
 
-      <KitSheet open={sheetAberta} onClose={() => setSheetAberta(false)} kit={kitEditando} catalogo={catalogo} />
+      <KitSheet key={kitEditando?.id ?? 'novo'} open={sheetAberta} onClose={() => setSheetAberta(false)} kit={kitEditando} catalogo={catalogo} />
     </div>
   )
 }
