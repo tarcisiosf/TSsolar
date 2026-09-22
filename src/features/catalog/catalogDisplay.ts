@@ -117,16 +117,17 @@ export function calcularCustoPorMetro(input: { apresentacao: ApresentacaoCabo; c
  * catálogo). Normaliza em memória para tipoPeca='kit_completo', sem tocar no Firestore — se o
  * item for reaberto e salvo, passa a gravar no formato novo. */
 export function normalizarCatalogItem(raw: CatalogItem): CatalogItem {
-  if (raw.categoria === 'estrutura' && !('tipoPeca' in raw)) {
+  const bruto = raw as unknown as Record<string, unknown>
+  if (raw.categoria === 'estrutura' && !('tipoPeca' in bruto)) {
     return {
-      ...raw,
+      ...bruto,
       tipoPeca: 'kit_completo',
-      tipoTelhado: (raw as { tipoTelhado?: TipoTelhado }).tipoTelhado ?? null,
+      tipoTelhado: (bruto.tipoTelhado as TipoTelhado | undefined) ?? null,
       medida: '',
       formaVenda: 'unidade',
       pecasPorPacote: null,
       unidade: 'un',
-    }
+    } as CatalogItem
   }
   return raw
 }

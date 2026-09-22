@@ -173,7 +173,7 @@ describe('normalizarCatalogItem', () => {
       tipoTelhado: 'ceramico',
       custoUnitario: 120,
       ativo: true,
-    })
+    }) as unknown as CatalogItem
     expect(normalizarCatalogItem(legado)).toMatchObject({
       categoria: 'estrutura',
       tipoPeca: 'kit_completo',
@@ -189,12 +189,12 @@ describe('normalizarCatalogItem', () => {
     const novo = comBase({
       categoria: 'estrutura', unidade: 'barra', marca: '', tipoPeca: 'perfil', tipoTelhado: null,
       medida: '2,4 m', formaVenda: 'barra', pecasPorPacote: null, custoUnitario: 30, ativo: true,
-    })
+    }) as unknown as CatalogItem
     expect(normalizarCatalogItem(novo)).toEqual(novo)
   })
 
   it('não mexe em outras categorias', () => {
-    const modulo = comBase({ categoria: 'modulo', unidade: 'un', marca: 'X', potenciaWp: 550, areaM2: null, larguraM: null, tecnologia: null, garantiaProdutoAnos: null, garantiaPerformanceAnos: null, custoUnitario: 700, ativo: true })
+    const modulo = comBase({ categoria: 'modulo', unidade: 'un', marca: 'X', potenciaWp: 550, areaM2: null, larguraM: null, tecnologia: null, garantiaProdutoAnos: null, garantiaPerformanceAnos: null, custoUnitario: 700, ativo: true }) as unknown as CatalogItem
     expect(normalizarCatalogItem(modulo)).toEqual(modulo)
   })
 })
