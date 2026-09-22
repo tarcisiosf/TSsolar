@@ -543,7 +543,7 @@ git commit -m "feat: cabo ganha cor, apresentação (metro/rolo) e custoPorMetro
 - Test: `src/features/catalog/catalogDisplay.test.ts`, `src/features/catalog/catalogSchema.test.ts`
 
 **Interfaces:**
-- Produces: `TipoPecaEstrutura`, `FormaVendaEstrutura` em `firestore.ts`; `CatalogItemEstrutura.{tipoPeca,tipoTelhado,medida,formaVenda,pecasPorPacote}`; `TIPOS_PECA_ESTRUTURA`, `TIPO_PECA_ESTRUTURA_LABELS`, `FORMA_VENDA_LABELS` em `catalogLabels.ts`; `normalizarCatalogItem(raw): CatalogItem` exportada de `catalogDisplay.ts` (usada por `src/lib/data/catalog.ts` na Task 8).
+- Produces: `TipoPecaEstrutura`, `FormaVendaEstrutura` em `firestore.ts`; `CatalogItemEstrutura.{tipoPeca,tipoTelhado,medida,formaVenda,pecasPorPacote}`; `TIPOS_PECA_ESTRUTURA`, `TIPO_PECA_ESTRUTURA_LABELS`, `FORMA_VENDA_LABELS` em `catalogLabels.ts`; `normalizarCatalogItem(raw): CatalogItem` exportada de `catalogDisplay.ts` (usada por `src/lib/data/catalog.ts` na Task 14).
 
 - [ ] **Step 1: Escrever os testes que falham**
 
