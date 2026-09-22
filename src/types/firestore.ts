@@ -8,6 +8,7 @@ export type TipoTelhado = 'ceramico' | 'fibrocimento' | 'metalico' | 'laje' | 's
 export type TipoCabo = 'cc_solar' | 'ca'
 export type TipoProtecao = 'disjuntor' | 'dps'
 export type BitolaCaboMm2 = 4 | 6 | 10 | 16
+export type TecnologiaModulo = 'monofacial' | 'bifacial'
 export type StatusItem = 'incluso' | 'fornecido_cliente' | 'nao_incluso'
 export type StatusProposta = 'rascunho' | 'enviada' | 'negociacao' | 'fechada' | 'perdida'
 export type ModoPrecificacao = 'margem' | 'manual'
@@ -55,6 +56,8 @@ export interface CalcSettings {
   aliquotaSimples: number
   comissaoPadrao: number
   margemPadrao: number
+  larguraModuloPadraoM: number
+  espacamentoHookM: number
   proximoNumero: number
 }
 
@@ -73,6 +76,8 @@ export interface CatalogItemModulo extends CatalogItemBase {
   marca: string
   potenciaWp: number
   areaM2: number | null
+  larguraM: number | null
+  tecnologia: TecnologiaModulo | null
   garantiaProdutoAnos: number | null
   garantiaPerformanceAnos: number | null
 }
@@ -86,20 +91,38 @@ export interface CatalogItemInversor extends CatalogItemBase {
   fase: Ligacao
   monitoramentoWifi: boolean
   garantiaAnos: number | null
+  mppts: number | null
 }
+
+export type TipoPecaEstrutura =
+  | 'perfil' | 'suporte_hook' | 'grampo_intermediario' | 'grampo_terminal'
+  | 'emenda_perfil' | 'chapa_aterramento' | 'grampo_aterramento' | 'kit_completo' | 'outro'
+
+export type FormaVendaEstrutura = 'unidade' | 'pacote' | 'barra'
 
 export interface CatalogItemEstrutura extends CatalogItemBase {
   categoria: 'estrutura'
-  unidade: 'modulo'
+  unidade: 'un' | 'pacote' | 'barra'
   marca: string
-  tipoTelhado: TipoTelhado
+  tipoPeca: TipoPecaEstrutura
+  tipoTelhado: TipoTelhado | null
+  medida: string
+  formaVenda: FormaVendaEstrutura
+  pecasPorPacote: number | null
 }
+
+export type CorCabo = 'preto' | 'vermelho' | 'outro'
+export type ApresentacaoCabo = 'metro' | 'rolo'
 
 export interface CatalogItemCabo extends CatalogItemBase {
   categoria: 'cabo'
   unidade: 'm'
   tipo: TipoCabo
   bitolaMm2: BitolaCaboMm2
+  cor: CorCabo
+  apresentacao: ApresentacaoCabo
+  metrosPorRolo: number | null
+  custoPorMetro: number
 }
 
 export interface CatalogItemMc4 extends CatalogItemBase {
@@ -140,6 +163,19 @@ export type CatalogItem =
 
 /** `Omit` que distribui sobre uniões discriminadas (o `Omit` nativo colapsa em `keyof` da união e quebraria o discriminante). */
 export type DistributiveOmit<T, K extends PropertyKey> = T extends unknown ? Omit<T, K> : never
+
+export interface KitItem {
+  catalogId: string
+  quantidadePadrao: number | null
+}
+
+export interface Kit {
+  id: string
+  nome: string
+  descricao: string
+  itens: KitItem[]
+  ativo: boolean
+}
 
 export interface Client {
   id: string

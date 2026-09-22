@@ -1,9 +1,14 @@
 import type {
+  ApresentacaoCabo,
   BitolaCaboMm2,
   CategoriaCatalogo,
+  CorCabo,
+  FormaVendaEstrutura,
   Ligacao,
+  TecnologiaModulo,
   TipoCabo,
   TipoInversor,
+  TipoPecaEstrutura,
   TipoProtecao,
   TipoTelhado,
 } from '@/types/firestore'
@@ -22,11 +27,9 @@ export const CATEGORIA_LABELS: Record<CategoriaCatalogo, string> = {
 export const CATEGORIAS: CategoriaCatalogo[] = ['modulo', 'inversor', 'estrutura', 'cabo', 'mc4', 'stringbox', 'protecao', 'outro']
 
 /** Unidade de custo fixa por categoria — mostrada como texto no formulário, exceto em "outro". */
-export const UNIDADE_CATEGORIA_LABELS: Record<Exclude<CategoriaCatalogo, 'outro'>, string> = {
+export const UNIDADE_CATEGORIA_LABELS: Record<Exclude<CategoriaCatalogo, 'outro' | 'cabo' | 'estrutura'>, string> = {
   modulo: 'por unidade',
   inversor: 'por unidade',
-  estrutura: 'por módulo',
-  cabo: 'por metro',
   mc4: 'por par',
   stringbox: 'por unidade',
   protecao: 'por unidade',
@@ -51,6 +54,17 @@ export const TIPO_CABO_LABELS: Record<TipoCabo, string> = {
   ca: 'CA',
 }
 
+export const COR_CABO_LABELS: Record<CorCabo, string> = {
+  preto: 'Preto',
+  vermelho: 'Vermelho',
+  outro: 'Outro',
+}
+
+export const APRESENTACAO_CABO_LABELS: Record<ApresentacaoCabo, string> = {
+  metro: 'Metro',
+  rolo: 'Rolo',
+}
+
 export const TIPO_PROTECAO_LABELS: Record<TipoProtecao, string> = {
   disjuntor: 'Disjuntor',
   dps: 'DPS',
@@ -62,4 +76,32 @@ export const FASE_LABELS: Record<Ligacao, string> = {
   tri: 'Trifásico',
 }
 
+export const TECNOLOGIA_MODULO_LABELS: Record<TecnologiaModulo, string> = {
+  monofacial: 'Monofacial',
+  bifacial: 'Bifacial',
+}
+
 export const BITOLAS_CABO: BitolaCaboMm2[] = [4, 6, 10, 16]
+
+export const TIPOS_PECA_ESTRUTURA: TipoPecaEstrutura[] = [
+  'perfil', 'suporte_hook', 'grampo_intermediario', 'grampo_terminal',
+  'emenda_perfil', 'chapa_aterramento', 'grampo_aterramento', 'kit_completo', 'outro',
+]
+
+export const TIPO_PECA_ESTRUTURA_LABELS: Record<TipoPecaEstrutura, string> = {
+  perfil: 'Perfil de alumínio',
+  suporte_hook: 'Suporte hook',
+  grampo_intermediario: 'Grampo intermediário',
+  grampo_terminal: 'Grampo terminal',
+  emenda_perfil: 'Emenda de perfil',
+  chapa_aterramento: 'Chapa de aterramento',
+  grampo_aterramento: 'Grampo de aterramento',
+  kit_completo: 'Kit completo',
+  outro: 'Outro',
+}
+
+export const FORMA_VENDA_LABELS: Record<FormaVendaEstrutura, string> = {
+  unidade: 'Unidade',
+  pacote: 'Pacote',
+  barra: 'Barra',
+}

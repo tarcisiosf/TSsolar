@@ -12,6 +12,8 @@ const moduloSchema = z.object({
   marca: z.string().min(1, 'Informe a marca'),
   potenciaWp: z.number().int('Informe um número inteiro de Wp').positive('Informe a potência em Wp'),
   areaM2: z.number().positive('Informe uma área maior que zero').nullable(),
+  larguraM: z.number().positive('Informe uma largura maior que zero').nullable(),
+  tecnologia: z.enum(['monofacial', 'bifacial']).nullable(),
   garantiaProdutoAnos: z.number().int().nonnegative().nullable(),
   garantiaPerformanceAnos: z.number().int().nonnegative().nullable(),
   ...base,
@@ -26,14 +28,19 @@ const inversorSchema = z.object({
   fase: z.enum(['mono', 'bi', 'tri']),
   monitoramentoWifi: z.boolean(),
   garantiaAnos: z.number().int().nonnegative().nullable(),
+  mppts: z.number().int().positive().nullable(),
   ...base,
 })
 
 const estruturaSchema = z.object({
   categoria: z.literal('estrutura'),
-  unidade: z.literal('modulo'),
+  unidade: z.enum(['un', 'pacote', 'barra']),
   marca: z.string(),
-  tipoTelhado: z.enum(['ceramico', 'fibrocimento', 'metalico', 'laje', 'solo']),
+  tipoPeca: z.enum(['perfil', 'suporte_hook', 'grampo_intermediario', 'grampo_terminal', 'emenda_perfil', 'chapa_aterramento', 'grampo_aterramento', 'kit_completo', 'outro']),
+  tipoTelhado: z.enum(['ceramico', 'fibrocimento', 'metalico', 'laje', 'solo']).nullable(),
+  medida: z.string(),
+  formaVenda: z.enum(['unidade', 'pacote', 'barra']),
+  pecasPorPacote: z.number().int().positive().nullable(),
   ...base,
 })
 
@@ -42,6 +49,9 @@ const caboSchema = z.object({
   unidade: z.literal('m'),
   tipo: z.enum(['cc_solar', 'ca']),
   bitolaMm2: z.union(BITOLAS_CABO.map((b) => z.literal(b)) as [z.ZodLiteral<number>, z.ZodLiteral<number>, ...z.ZodLiteral<number>[]]),
+  cor: z.enum(['preto', 'vermelho', 'outro']),
+  apresentacao: z.enum(['metro', 'rolo']),
+  metrosPorRolo: z.number().positive().nullable(),
   ...base,
 })
 
@@ -84,7 +94,14 @@ export const catalogItemSchema = z.discriminatedUnion('categoria', [
   stringboxSchema,
   protecaoSchema,
   outroSchema,
-])
+]).superRefine((val, ctx) => {
+  if (val.categoria === 'cabo' && val.apresentacao === 'rolo' && (!val.metrosPorRolo || val.metrosPorRolo <= 0)) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['metrosPorRolo'], message: 'Informe os metros por rolo' })
+  }
+  if (val.categoria === 'estrutura' && val.formaVenda === 'pacote' && (!val.pecasPorPacote || val.pecasPorPacote <= 0)) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['pecasPorPacote'], message: 'Informe quantas peças por pacote' })
+  }
+})
 
 /** Valida o payload do formulário e devolve um mapa campo -> primeira mensagem de erro (vazio se válido). */
 export function validarCatalogItem(input: unknown): Record<string, string> {
