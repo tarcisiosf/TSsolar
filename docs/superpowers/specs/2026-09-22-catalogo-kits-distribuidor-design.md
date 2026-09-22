@@ -201,7 +201,8 @@ match /kits/{kitId} {
 
 `src/lib/data/catalogImport.ts`, função `importarItensDistribuidor()`:
 
-- Monta os 8 itens do catálogo (seção 2 do pedido original) e os 2 kits,
+- Monta os 13 itens do catálogo (seção 2 do pedido original: 1 módulo, 2
+  inversores, 2 cabos, 7 componentes de estrutura, 1 MC4) e os 2 kits,
   cada um com um **ID de documento determinístico** (slug estável derivado da
   categoria + specs, ex. `import-modulo-leapton-620-bifacial`,
   `import-cabo-4mm-preto`, `kit-sofar-5kw-fibrocimento`).
