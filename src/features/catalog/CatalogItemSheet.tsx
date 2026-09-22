@@ -11,12 +11,18 @@ import type { CatalogItem } from '@/types/firestore'
 import { defaultCatalogItemInput } from './catalogDisplay'
 import { validarCatalogItem } from './catalogSchema'
 import {
+  APRESENTACAO_CABO_LABELS,
   BITOLAS_CABO,
   CATEGORIAS,
   CATEGORIA_LABELS,
+  COR_CABO_LABELS,
   FASE_LABELS,
+  FORMA_VENDA_LABELS,
+  TECNOLOGIA_MODULO_LABELS,
+  TIPOS_PECA_ESTRUTURA,
   TIPO_CABO_LABELS,
   TIPO_INVERSOR_LABELS,
+  TIPO_PECA_ESTRUTURA_LABELS,
   TIPO_PROTECAO_LABELS,
   TIPO_TELHADO_LABELS,
   UNIDADE_CATEGORIA_LABELS,
@@ -99,7 +105,7 @@ export function CatalogItemSheet({ open, onClose, item }: { open: boolean; onClo
           options={CATEGORIAS.map((c) => ({ value: c, label: CATEGORIA_LABELS[c] }))}
         />
 
-        {form.categoria !== 'outro' && (
+        {form.categoria !== 'outro' && form.categoria !== 'cabo' && form.categoria !== 'estrutura' && (
           <div className="rounded-field bg-chip px-4 py-2.5 text-sm font-semibold text-graphite">
             Unidade de custo: {UNIDADE_CATEGORIA_LABELS[form.categoria]}
           </div>
@@ -116,6 +122,15 @@ export function CatalogItemSheet({ open, onClose, item }: { open: boolean; onClo
               <DecimalInput label="Garantia do produto (anos)" integer suffix="anos" value={form.garantiaProdutoAnos} onChange={(v) => set('garantiaProdutoAnos', v)} />
               <DecimalInput label="Garantia de performance (anos)" integer suffix="anos" value={form.garantiaPerformanceAnos} onChange={(v) => set('garantiaPerformanceAnos', v)} />
             </div>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <DecimalInput label="Largura do módulo (m)" suffix="m" hint="Opcional — usada no cálculo de perfis de estrutura" value={form.larguraM} onChange={(v) => set('larguraM', v)} error={erros.larguraM} />
+              <Select
+                label="Tecnologia"
+                value={form.tecnologia ?? ''}
+                onChange={(e) => set('tecnologia', e.target.value || null)}
+                options={[{ value: '', label: 'Não informado' }, ...Object.entries(TECNOLOGIA_MODULO_LABELS).map(([value, label]) => ({ value, label }))]}
+              />
+            </div>
           </>
         )}
 
@@ -130,32 +145,67 @@ export function CatalogItemSheet({ open, onClose, item }: { open: boolean; onClo
               <Select label="Fase" value={form.fase} onChange={(e) => set('fase', e.target.value as typeof form.fase)} options={Object.entries(FASE_LABELS).map(([value, label]) => ({ value, label }))} />
               <DecimalInput label="Garantia (anos)" integer suffix="anos" value={form.garantiaAnos} onChange={(v) => set('garantiaAnos', v)} />
             </div>
+            <DecimalInput label="MPPTs" integer hint="Opcional" value={form.mppts} onChange={(v) => set('mppts', v)} />
             <Switch label="Monitoramento Wi-Fi" checked={form.monitoramentoWifi} onChange={(v) => set('monitoramentoWifi', v)} />
           </>
         )}
 
         {form.categoria === 'estrutura' && (
           <>
-            <Input label="Marca" hint="Opcional" value={form.marca} onChange={(e) => set('marca', e.target.value)} />
             <Select
-              label="Tipo de telhado"
-              value={form.tipoTelhado}
-              onChange={(e) => set('tipoTelhado', e.target.value as typeof form.tipoTelhado)}
-              options={Object.entries(TIPO_TELHADO_LABELS).map(([value, label]) => ({ value, label }))}
+              label="Peça"
+              value={form.tipoPeca}
+              onChange={(e) => set('tipoPeca', e.target.value as typeof form.tipoPeca)}
+              options={TIPOS_PECA_ESTRUTURA.map((t) => ({ value: t, label: TIPO_PECA_ESTRUTURA_LABELS[t] }))}
             />
+            <Input label="Marca" hint="Opcional" value={form.marca} onChange={(e) => set('marca', e.target.value)} />
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <Select
+                label="Tipo de telhado"
+                value={form.tipoTelhado ?? ''}
+                onChange={(e) => set('tipoTelhado', e.target.value || null)}
+                options={[{ value: '', label: 'Não se aplica' }, ...Object.entries(TIPO_TELHADO_LABELS).map(([value, label]) => ({ value, label }))]}
+              />
+              <Input label="Medida" hint="Opcional — ex.: 2,4 m, 35 mm" value={form.medida} onChange={(e) => set('medida', e.target.value)} />
+            </div>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <Select
+                label="Forma de venda"
+                value={form.formaVenda}
+                onChange={(e) => set('formaVenda', e.target.value as typeof form.formaVenda)}
+                options={Object.entries(FORMA_VENDA_LABELS).map(([value, label]) => ({ value, label }))}
+              />
+              {form.formaVenda === 'pacote' && (
+                <DecimalInput label="Peças por pacote" integer value={form.pecasPorPacote} onChange={(v) => set('pecasPorPacote', v)} error={erros.pecasPorPacote} />
+              )}
+            </div>
           </>
         )}
 
         {form.categoria === 'cabo' && (
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <Select label="Tipo" value={form.tipo} onChange={(e) => set('tipo', e.target.value as typeof form.tipo)} options={Object.entries(TIPO_CABO_LABELS).map(([value, label]) => ({ value, label }))} />
-            <Select
-              label="Bitola"
-              value={String(form.bitolaMm2)}
-              onChange={(e) => set('bitolaMm2', Number(e.target.value) as typeof form.bitolaMm2)}
-              options={BITOLAS_CABO.map((b) => ({ value: String(b), label: `${b} mm²` }))}
-            />
-          </div>
+          <>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <Select label="Tipo" value={form.tipo} onChange={(e) => set('tipo', e.target.value as typeof form.tipo)} options={Object.entries(TIPO_CABO_LABELS).map(([value, label]) => ({ value, label }))} />
+              <Select
+                label="Bitola"
+                value={String(form.bitolaMm2)}
+                onChange={(e) => set('bitolaMm2', Number(e.target.value) as typeof form.bitolaMm2)}
+                options={BITOLAS_CABO.map((b) => ({ value: String(b), label: `${b} mm²` }))}
+              />
+            </div>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <Select label="Cor" value={form.cor} onChange={(e) => set('cor', e.target.value as typeof form.cor)} options={Object.entries(COR_CABO_LABELS).map(([value, label]) => ({ value, label }))} />
+              <Select
+                label="Apresentação"
+                value={form.apresentacao}
+                onChange={(e) => set('apresentacao', e.target.value as typeof form.apresentacao)}
+                options={Object.entries(APRESENTACAO_CABO_LABELS).map(([value, label]) => ({ value, label }))}
+              />
+            </div>
+            {form.apresentacao === 'rolo' && (
+              <DecimalInput label="Metros por rolo" integer suffix="m" value={form.metrosPorRolo} onChange={(v) => set('metrosPorRolo', v)} error={erros.metrosPorRolo} />
+            )}
+          </>
         )}
 
         {form.categoria === 'mc4' && <Input label="Marca" hint="Opcional" value={form.marca} onChange={(e) => set('marca', e.target.value)} />}
@@ -181,7 +231,21 @@ export function CatalogItemSheet({ open, onClose, item }: { open: boolean; onClo
           </>
         )}
 
-        <MoneyInput label="Custo unitário" value={form.custoUnitario} onChange={(v) => set('custoUnitario', v)} error={erros.custoUnitario} />
+        <MoneyInput
+          label="Custo unitário"
+          value={form.custoUnitario}
+          onChange={(v) => set('custoUnitario', v)}
+          error={erros.custoUnitario}
+          hint={
+            form.categoria === 'cabo'
+              ? form.apresentacao === 'rolo'
+                ? 'Preço do rolo'
+                : 'Preço por metro'
+              : form.categoria === 'estrutura'
+                ? `Preço por ${FORMA_VENDA_LABELS[form.formaVenda].toLowerCase()}`
+                : undefined
+          }
+        />
         <Switch label="Ativo no catálogo" checked={form.ativo} onChange={(v) => set('ativo', v)} />
       </div>
     </Sheet>
