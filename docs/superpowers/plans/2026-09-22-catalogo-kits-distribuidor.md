@@ -1888,7 +1888,7 @@ const SISTEMA: ProposalSistema = { potenciaKwp: 6.2, qtdModulos: 10, moduloId: '
 const MODULO: CatalogItem = {
   id: 'modulo-1', nome: '', criadoEm: TS, atualizadoEm: TS,
   categoria: 'modulo', unidade: 'un', marca: 'Leapton', potenciaWp: 620, areaM2: null,
-  larguraM: 1.13, tecnologia: 'bifacial', garantiaProdutoAnos: null, garantiaPerformanceAnos: null,
+  larguraM: 1.0, tecnologia: 'bifacial', garantiaProdutoAnos: null, garantiaPerformanceAnos: null,
   custoUnitario: 0, ativo: true,
 }
 
@@ -1940,7 +1940,11 @@ describe('quantidadeSugerida', () => {
   })
 
   it('estrutura usa a largura do módulo selecionado', () => {
-    expect(quantidadeSugerida(estrutura({ tipoPeca: 'grampo_terminal', pecasPorPacote: 4 }), SISTEMA, [MODULO], CALC)).toBe(1)
+    // N=10, largura do módulo 1,0 m -> total 20 m -> ceil(20/2.4)+1 = 9+1 = 10
+    // (o teste seguinte usa a largura padrão de Configurações, 1,15 m, e dá 11 — números
+    // diferentes de propósito, para provar que é a largura do módulo que está sendo usada aqui)
+    const perfil = estrutura({ tipoPeca: 'perfil', formaVenda: 'barra', pecasPorPacote: null, unidade: 'barra' })
+    expect(quantidadeSugerida(perfil, SISTEMA, [MODULO], CALC)).toBe(10)
   })
 
   it('estrutura sem módulo selecionado usa a largura padrão de Configurações', () => {
