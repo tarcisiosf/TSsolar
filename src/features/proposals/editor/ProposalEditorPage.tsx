@@ -121,7 +121,6 @@ export function ProposalEditorPage() {
       return calcularResultadosProposta({
         entrada: draft.entrada,
         sistema: draft.sistema,
-        itens: draft.itens,
         servicos: draft.servicos,
         precificacao: draft.precificacao,
         inversorPotenciaKw: inversorSelecionado && inversorSelecionado.categoria === 'inversor' ? inversorSelecionado.potenciaKw : 0,

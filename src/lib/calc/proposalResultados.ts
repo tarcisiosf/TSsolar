@@ -1,4 +1,4 @@
-import type { CalcSettings, ProposalEntrada, ProposalItem, ProposalPrecificacao, ProposalResultados, ProposalServicos, ProposalSistema } from '@/types/firestore'
+import type { CalcSettings, ProposalEntrada, ProposalPrecificacao, ProposalResultados, ProposalServicos, ProposalSistema } from '@/types/firestore'
 import { calcularCenario, calcularCustoKwhGerado } from './cenarios'
 import { calcularConsumoMedioMensal } from './consumo'
 import { calcularContaComSistemaMes, calcularContaSemSistemaMes, percentualFioBPorAno } from './contaComSistema'
@@ -9,7 +9,6 @@ import { calcularPrecificacao } from './precificacao'
 export interface CalcularResultadosPropostaInput {
   entrada: ProposalEntrada
   sistema: ProposalSistema
-  itens: ProposalItem[]
   servicos: ProposalServicos
   precificacao: ProposalPrecificacao
   inversorPotenciaKw: number
@@ -24,14 +23,13 @@ export interface CalcularResultadosPropostaSaida {
 
 /** Junta todos os módulos de cálculo (consumo, geração, cenários, precificação) para uma proposta completa. */
 export function calcularResultadosProposta(input: CalcularResultadosPropostaInput): CalcularResultadosPropostaSaida {
-  const { entrada, sistema, itens, servicos, precificacao, inversorPotenciaKw, calc, anoCalendarioInicial } = input
+  const { entrada, sistema, servicos, precificacao, inversorPotenciaKw, calc, anoCalendarioInicial } = input
 
   const consumoMedioMensal = calcularConsumoMedioMensal(entrada)
   const consumoMensalKwh = entrada.consumoMensalKwh ?? new Array(12).fill(consumoMedioMensal)
   const relacaoCcCa = calcularRelacaoCcCa(sistema.potenciaKwp, inversorPotenciaKw).relacao
 
   const precificacaoResultado = calcularPrecificacao(
-    itens,
     servicos,
     sistema.potenciaKwp,
     precificacao.modo,

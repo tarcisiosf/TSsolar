@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { CalcSettings, ProposalEntrada, ProposalItem, ProposalPrecificacao, ProposalServicos, ProposalSistema } from '@/types/firestore'
+import type { CalcSettings, ProposalEntrada, ProposalPrecificacao, ProposalServicos, ProposalSistema } from '@/types/firestore'
 import { calcularResultadosProposta } from './proposalResultados'
 
 const calc: CalcSettings = {
@@ -39,12 +39,7 @@ const entrada: ProposalEntrada = {
 
 const sistema: ProposalSistema = { potenciaKwp: 4.4, qtdModulos: 8, moduloId: 'mod-1', inversorId: 'inv-1', areaM2: 24 }
 
-const itens: ProposalItem[] = [
-  { id: '1', catalogId: 'mod-1', descricao: 'Módulo 550W', especificacao: '', quantidade: 8, unidade: 'un', custoUnitario: 700, status: 'incluso' },
-  { id: '2', catalogId: 'inv-1', descricao: 'Inversor 5kW', especificacao: '', quantidade: 1, unidade: 'un', custoUnitario: 3200, status: 'incluso' },
-]
-
-const servicos: ProposalServicos = { projeto: 300, instalacao: 1800, art: 150, frete: 200, homologacao: 250, outros: [] }
+const servicos: ProposalServicos = { materiais: 8800, projeto: 300, instalacao: 1800, art: 150, frete: 200, homologacao: 250, outros: [] }
 const precificacao: ProposalPrecificacao = { modo: 'margem', margem: 0.25, comissao: 0, precoFinal: 0 }
 
 describe('calcularResultadosProposta', () => {
@@ -52,7 +47,6 @@ describe('calcularResultadosProposta', () => {
     const { resultados, precoFinal } = calcularResultadosProposta({
       entrada,
       sistema,
-      itens,
       servicos,
       precificacao,
       inversorPotenciaKw: 5,

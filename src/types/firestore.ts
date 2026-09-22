@@ -218,6 +218,7 @@ export interface ProposalItem {
 }
 
 export interface ProposalServicos {
+  materiais: number
   projeto: number
   instalacao: number
   art: number

@@ -1,12 +1,9 @@
-import type { ModoPrecificacao, ProposalItem, ProposalServicos } from '@/types/firestore'
+import type { ModoPrecificacao, ProposalServicos } from '@/types/firestore'
 
-/** Custo total: soma dos itens marcados como "incluso" mais os serviços. */
-export function calcularCustoTotal(itens: ProposalItem[], servicos: ProposalServicos): number {
-  const custoItens = itens
-    .filter((item) => item.status === 'incluso')
-    .reduce((acc, item) => acc + item.quantidade * item.custoUnitario, 0)
-
+/** Custo total: custo informado dos materiais mais os serviços. */
+export function calcularCustoTotal(servicos: ProposalServicos): number {
   const custoServicos =
+    servicos.materiais +
     servicos.projeto +
     servicos.instalacao +
     servicos.art +
@@ -14,7 +11,7 @@ export function calcularCustoTotal(itens: ProposalItem[], servicos: ProposalServ
     servicos.homologacao +
     servicos.outros.reduce((acc, o) => acc + o.valor, 0)
 
-  return custoItens + custoServicos
+  return custoServicos
 }
 
 /** Preço sugerido pelo modo margem, arredondado para cima até a dezena de reais. */
@@ -40,7 +37,6 @@ export interface ResultadoPrecificacao {
 }
 
 export function calcularPrecificacao(
-  itens: ProposalItem[],
   servicos: ProposalServicos,
   potenciaKwp: number,
   modo: ModoPrecificacao,
@@ -49,7 +45,7 @@ export function calcularPrecificacao(
   aliquotaSimples: number,
   precoManual: number | null,
 ): ResultadoPrecificacao {
-  const custoTotal = calcularCustoTotal(itens, servicos)
+  const custoTotal = calcularCustoTotal(servicos)
   const precoFinal =
     modo === 'margem' ? calcularPrecoSugerido(custoTotal, margem, aliquotaSimples, comissao) : (precoManual ?? 0)
   const margemResultante = calcularMargemResultante(custoTotal, precoFinal, aliquotaSimples, comissao)

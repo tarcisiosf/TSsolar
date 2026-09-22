@@ -31,6 +31,7 @@ export function ServicosStep({ servicos, onChange }: { servicos: ProposalServico
       <h2 className="text-lg font-bold text-graphite">Serviços e custos</h2>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <MoneyInput label="Materiais" value={servicos.materiais} onChange={(v) => set('materiais', v)} hint="Custo total dos equipamentos e materiais da proposta" />
         <MoneyInput label="Projeto" value={servicos.projeto} onChange={(v) => set('projeto', v)} />
         <MoneyInput label="Instalação" value={servicos.instalacao} onChange={(v) => set('instalacao', v)} />
         <MoneyInput label="ART" value={servicos.art} onChange={(v) => set('art', v)} />

@@ -21,13 +21,12 @@ export function SistemaStep({ sistema, onChange, consumoMedioMensalKwh, produtiv
   function recalcularComQtd(qtdModulos: number, moduloId = sistema.moduloId) {
     const modulo = modulos.find((m) => m.id === moduloId)
     const potenciaKwp = modulo && modulo.categoria === 'modulo' ? potenciaFinalKwp(qtdModulos, modulo.potenciaWp) : sistema.potenciaKwp
-    const areaM2Modulo = modulo && modulo.categoria === 'modulo' ? modulo.areaM2 : null
     onChange({
       ...sistema,
       moduloId,
       qtdModulos,
       potenciaKwp,
-      areaM2: calcularAreaEstimada(qtdModulos, areaM2Modulo),
+      areaM2: calcularAreaEstimada(qtdModulos),
     })
   }
 
@@ -83,11 +82,7 @@ export function SistemaStep({ sistema, onChange, consumoMedioMensalKwh, produtiv
         </div>
         <div className="flex flex-col justify-center rounded-field bg-chip px-4 py-2">
           <p className="text-xs font-semibold text-muted">Área estimada</p>
-          {sistema.areaM2 != null ? (
-            <p className="tabular-nums text-base font-extrabold text-graphite">{formatNumber(sistema.areaM2, 1)} m²</p>
-          ) : (
-            <p className="text-xs font-semibold text-sun-ink">Informe a área do módulo no catálogo</p>
-          )}
+          <p className="tabular-nums text-base font-extrabold text-graphite">{formatNumber(sistema.areaM2 ?? 0, 1)} m²</p>
         </div>
       </div>
 

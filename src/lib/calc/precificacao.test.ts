@@ -1,15 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import { calcularCustoTotal, calcularMargemResultante, calcularPrecificacao, calcularPrecoSugerido } from './precificacao'
-import type { ProposalItem, ProposalServicos } from '@/types/firestore'
-
-const itens: ProposalItem[] = [
-  { id: '1', catalogId: null, descricao: 'Módulo', especificacao: '', quantidade: 8, unidade: 'un', custoUnitario: 700, status: 'incluso' },
-  { id: '2', catalogId: null, descricao: 'Inversor', especificacao: '', quantidade: 1, unidade: 'un', custoUnitario: 3200, status: 'incluso' },
-  { id: '3', catalogId: null, descricao: 'Kit cliente', especificacao: '', quantidade: 1, unidade: 'kit', custoUnitario: 999, status: 'fornecido_cliente' },
-  { id: '4', catalogId: null, descricao: 'Fora do escopo', especificacao: '', quantidade: 1, unidade: 'un', custoUnitario: 500, status: 'nao_incluso' },
-]
+import type { ProposalServicos } from '@/types/firestore'
 
 const servicos: ProposalServicos = {
+  materiais: 8900,
   projeto: 300,
   instalacao: 1800,
   art: 150,
@@ -19,10 +13,9 @@ const servicos: ProposalServicos = {
 }
 
 describe('calcularCustoTotal', () => {
-  it('soma apenas itens inclusos mais os serviços', () => {
-    const custoItensInclusos = 8 * 700 + 1 * 3200
+  it('soma o custo dos materiais mais os serviços', () => {
     const custoServicos = 300 + 1800 + 150 + 200 + 250 + 100
-    expect(calcularCustoTotal(itens, servicos)).toBe(custoItensInclusos + custoServicos)
+    expect(calcularCustoTotal(servicos)).toBe(8900 + custoServicos)
   })
 })
 
@@ -49,14 +42,14 @@ describe('calcularMargemResultante', () => {
 
 describe('calcularPrecificacao', () => {
   it('calcula lucro e R$/Wp no modo margem', () => {
-    const resultado = calcularPrecificacao(itens, servicos, 4.4, 'margem', 0.25, 0, 0.06, null)
+    const resultado = calcularPrecificacao(servicos, 4.4, 'margem', 0.25, 0, 0.06, null)
     expect(resultado.custoTotal).toBeGreaterThan(0)
     expect(resultado.precoFinal).toBeGreaterThan(resultado.custoTotal)
     expect(resultado.precoPorWp).toBeCloseTo(resultado.precoFinal / 4400, 5)
   })
 
   it('usa o preço manual quando o modo é manual', () => {
-    const resultado = calcularPrecificacao(itens, servicos, 4.4, 'manual', 0.25, 0, 0.06, 18990)
+    const resultado = calcularPrecificacao(servicos, 4.4, 'manual', 0.25, 0, 0.06, 18990)
     expect(resultado.precoFinal).toBe(18990)
   })
 })

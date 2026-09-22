@@ -30,6 +30,7 @@ export function novoItemId(): string {
 }
 
 export const SERVICOS_VAZIOS: ProposalServicos = {
+  materiais: 0,
   projeto: 0,
   instalacao: 0,
   art: 0,
@@ -70,6 +71,12 @@ export function criarPropostaVazia(id: string, client: Pick<Client, 'id' | 'nome
   }
 }
 
+/** Propostas salvas antes do campo `materiais` existir não o têm em `servicos` — preenche com o
+ * padrão (0) ao ler, sem tocar no Firestore, para não gerar NaN nos cálculos de custo/margem. */
+function normalizarProposal(raw: Proposal): Proposal {
+  return { ...raw, servicos: { ...SERVICOS_VAZIOS, ...raw.servicos } }
+}
+
 export async function createProposal(proposal: Proposal): Promise<void> {
   await setDoc(doc(db, 'proposals', proposal.id), { ...proposal, criadoEm: serverTimestamp(), atualizadoEm: serverTimestamp() })
 }
@@ -77,19 +84,19 @@ export async function createProposal(proposal: Proposal): Promise<void> {
 export function subscribeProposals(onData: (propostas: Proposal[]) => void) {
   const q = query(proposalsCollection, orderBy('criadoEm', 'desc'))
   return onSnapshot(q, (snap) => {
-    onData(snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Proposal))
+    onData(snap.docs.map((d) => normalizarProposal({ id: d.id, ...d.data() } as Proposal)))
   })
 }
 
 export function subscribeProposal(id: string, onData: (proposal: Proposal | null) => void) {
   return onSnapshot(doc(db, 'proposals', id), (snap) => {
-    onData(snap.exists() ? ({ id: snap.id, ...snap.data() } as Proposal) : null)
+    onData(snap.exists() ? normalizarProposal({ id: snap.id, ...snap.data() } as Proposal) : null)
   })
 }
 
 export async function getProposal(id: string): Promise<Proposal | null> {
   const snap = await getDoc(doc(db, 'proposals', id))
-  return snap.exists() ? ({ id: snap.id, ...snap.data() } as Proposal) : null
+  return snap.exists() ? normalizarProposal({ id: snap.id, ...snap.data() } as Proposal) : null
 }
 
 /** Salva campos parciais da proposta (usado no autosave com debounce da UI). */
@@ -115,13 +122,12 @@ export async function publicarProposta(id: string, inversorPotenciaKw: number): 
   const [proposalSnap, calc, company] = await Promise.all([getDoc(doc(db, 'proposals', id)), getCalcSettings(), getCompanySettings()])
 
   if (!proposalSnap.exists()) throw new Error('Proposta não encontrada.')
-  const proposal = { id: proposalSnap.id, ...proposalSnap.data() } as Proposal
+  const proposal = normalizarProposal({ id: proposalSnap.id, ...proposalSnap.data() } as Proposal)
 
   const anoCalendarioInicial = new Date().getFullYear()
   const { resultados, precoFinal } = calcularResultadosProposta({
     entrada: proposal.entrada,
     sistema: proposal.sistema,
-    itens: proposal.itens,
     servicos: proposal.servicos,
     precificacao: proposal.precificacao,
     inversorPotenciaKw,

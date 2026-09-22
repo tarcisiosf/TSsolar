@@ -1,9 +1,7 @@
 import { Plus, Trash2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { MoneyInput } from '@/components/ui/MoneyInput'
 import { Segmented } from '@/components/ui/Segmented'
 import { Select } from '@/components/ui/Select'
-import { formatBRL } from '@/lib/format'
 import { novoItemId } from '@/lib/data/proposals'
 import type { CalcSettings, CatalogItem, Kit, ProposalItem, ProposalSistema, StatusItem } from '@/types/firestore'
 import { CATEGORIA_LABELS } from '@/features/catalog/catalogLabels'
@@ -110,8 +108,6 @@ export function MateriaisStep({ itens, onChange, sistema, catalogo, kits, calc }
     ])
   }
 
-  const custoTotalIncluso = itens.filter((i) => i.status === 'incluso').reduce((acc, i) => acc + i.quantidade * i.custoUnitario, 0)
-
   return (
     <div className="flex flex-col gap-4">
       <h2 className="text-lg font-bold text-graphite">Materiais</h2>
@@ -141,7 +137,7 @@ export function MateriaisStep({ itens, onChange, sistema, catalogo, kits, calc }
                 <Trash2 className="h-4 w-4" aria-hidden />
               </button>
             </div>
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div>
                 <label className="mb-1 block text-xs font-semibold text-muted">Quantidade ({item.unidade})</label>
                 <input
@@ -151,8 +147,7 @@ export function MateriaisStep({ itens, onChange, sistema, catalogo, kits, calc }
                   className="h-10 w-full rounded-field border border-[#D9D3C7] bg-surface px-3 text-sm tabular-nums outline-none focus:ring-2 focus:ring-sun"
                 />
               </div>
-              <MoneyInput label="Custo unitário" value={item.custoUnitario} onChange={(v) => atualizarItem(item.id, { custoUnitario: v })} />
-              <div className="col-span-2 sm:col-span-1">
+              <div>
                 <label className="mb-1 block text-xs font-semibold text-muted">Status</label>
                 <Segmented
                   size="sm"
@@ -218,10 +213,6 @@ export function MateriaisStep({ itens, onChange, sistema, catalogo, kits, calc }
           <Plus className="h-4 w-4" aria-hidden /> Item avulso
         </button>
       </div>
-
-      <p className="text-sm font-semibold text-graphite">
-        Custo dos itens inclusos: <span className="tabular-nums">{formatBRL(custoTotalIncluso)}</span>
-      </p>
     </div>
   )
 }

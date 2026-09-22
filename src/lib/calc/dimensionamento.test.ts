@@ -35,11 +35,11 @@ describe('calcularRelacaoCcCa', () => {
 })
 
 describe('calcularAreaEstimada', () => {
-  it('multiplica quantidade × área do módulo × 1,1 de folga', () => {
-    expect(calcularAreaEstimada(8, 2)).toBeCloseTo(8 * 2 * 1.1, 5)
+  it('multiplica a quantidade de módulos por 3 m² cada', () => {
+    expect(calcularAreaEstimada(8)).toBe(24)
   })
 
-  it('retorna null quando o módulo não tem área cadastrada', () => {
-    expect(calcularAreaEstimada(8, null)).toBeNull()
+  it('retorna 0 quando não há módulos', () => {
+    expect(calcularAreaEstimada(0)).toBe(0)
   })
 })

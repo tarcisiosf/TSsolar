@@ -45,7 +45,7 @@ function buildProposal(): Proposal {
         status: 'incluso',
       },
     ],
-    servicos: { projeto: 300, instalacao: 1800, art: 150, frete: 200, homologacao: 250, outros: [] },
+    servicos: { materiais: 0, projeto: 300, instalacao: 1800, art: 150, frete: 200, homologacao: 250, outros: [] },
     precificacao: { modo: 'margem', margem: MARGEM_SENTINELA, comissao: COMISSAO_SENTINELA, precoFinal: PRECO_FINAL },
     resultados: {
       custoTotal: CUSTO_UNITARIO_SENTINELA * 8,
