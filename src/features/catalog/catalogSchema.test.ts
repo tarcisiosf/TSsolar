@@ -56,4 +56,14 @@ describe('validarCatalogItem', () => {
     const erros = validarCatalogItem({ ...defaultCatalogItemInput('cabo'), apresentacao: 'metro', metrosPorRolo: null, custoUnitario: 3.5 })
     expect(erros.metrosPorRolo).toBeUndefined()
   })
+
+  it('componente de estrutura vendido em pacote sem pecasPorPacote gera erro', () => {
+    const erros = validarCatalogItem({ ...defaultCatalogItemInput('estrutura'), formaVenda: 'pacote', pecasPorPacote: null, custoUnitario: 8 })
+    expect(erros.pecasPorPacote).toBeTruthy()
+  })
+
+  it('componente de estrutura vendido em barra não exige pecasPorPacote', () => {
+    const erros = validarCatalogItem({ ...defaultCatalogItemInput('estrutura'), formaVenda: 'barra', pecasPorPacote: null, custoUnitario: 30 })
+    expect(erros.pecasPorPacote).toBeUndefined()
+  })
 })

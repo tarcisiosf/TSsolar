@@ -34,9 +34,13 @@ const inversorSchema = z.object({
 
 const estruturaSchema = z.object({
   categoria: z.literal('estrutura'),
-  unidade: z.literal('modulo'),
+  unidade: z.enum(['un', 'pacote', 'barra']),
   marca: z.string(),
-  tipoTelhado: z.enum(['ceramico', 'fibrocimento', 'metalico', 'laje', 'solo']),
+  tipoPeca: z.enum(['perfil', 'suporte_hook', 'grampo_intermediario', 'grampo_terminal', 'emenda_perfil', 'chapa_aterramento', 'grampo_aterramento', 'kit_completo', 'outro']),
+  tipoTelhado: z.enum(['ceramico', 'fibrocimento', 'metalico', 'laje', 'solo']).nullable(),
+  medida: z.string(),
+  formaVenda: z.enum(['unidade', 'pacote', 'barra']),
+  pecasPorPacote: z.number().int().positive().nullable(),
   ...base,
 })
 
@@ -93,6 +97,9 @@ export const catalogItemSchema = z.discriminatedUnion('categoria', [
 ]).superRefine((val, ctx) => {
   if (val.categoria === 'cabo' && val.apresentacao === 'rolo' && (!val.metrosPorRolo || val.metrosPorRolo <= 0)) {
     ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['metrosPorRolo'], message: 'Informe os metros por rolo' })
+  }
+  if (val.categoria === 'estrutura' && val.formaVenda === 'pacote' && (!val.pecasPorPacote || val.pecasPorPacote <= 0)) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['pecasPorPacote'], message: 'Informe quantas peças por pacote' })
   }
 })
 

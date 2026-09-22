@@ -92,11 +92,21 @@ export interface CatalogItemInversor extends CatalogItemBase {
   mppts: number | null
 }
 
+export type TipoPecaEstrutura =
+  | 'perfil' | 'suporte_hook' | 'grampo_intermediario' | 'grampo_terminal'
+  | 'emenda_perfil' | 'chapa_aterramento' | 'grampo_aterramento' | 'kit_completo' | 'outro'
+
+export type FormaVendaEstrutura = 'unidade' | 'pacote' | 'barra'
+
 export interface CatalogItemEstrutura extends CatalogItemBase {
   categoria: 'estrutura'
-  unidade: 'modulo'
+  unidade: 'un' | 'pacote' | 'barra'
   marca: string
-  tipoTelhado: TipoTelhado
+  tipoPeca: TipoPecaEstrutura
+  tipoTelhado: TipoTelhado | null
+  medida: string
+  formaVenda: FormaVendaEstrutura
+  pecasPorPacote: number | null
 }
 
 export type CorCabo = 'preto' | 'vermelho' | 'outro'

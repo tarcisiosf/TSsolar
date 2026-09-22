@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { Timestamp } from 'firebase/firestore'
 import type { CatalogItem } from '@/types/firestore'
-import { defaultCatalogItemInput, especificacaoCatalogItem, gerarNomeCatalogItem, unidadeDisplay, calcularCustoPorMetro } from './catalogDisplay'
+import { defaultCatalogItemInput, especificacaoCatalogItem, gerarNomeCatalogItem, unidadeDisplay, calcularCustoPorMetro, normalizarCatalogItem } from './catalogDisplay'
 
 const TS = {} as Timestamp
 
@@ -31,9 +31,24 @@ describe('gerarNomeCatalogItem', () => {
     expect(gerarNomeCatalogItem({ ...input, potenciaKw: 2.25 })).toBe('Inversor SOFAR 2,25 kW')
   })
 
-  it('estrutura', () => {
-    const input = { ...defaultCatalogItemInput('estrutura'), tipoTelhado: 'ceramico' as const }
-    expect(gerarNomeCatalogItem(input)).toBe('Estrutura para telhado cerâmico')
+  it('componente de estrutura: perfil', () => {
+    const input = { ...defaultCatalogItemInput('estrutura'), tipoPeca: 'perfil' as const, formaVenda: 'barra' as const, medida: '2,4 m' }
+    expect(gerarNomeCatalogItem(input)).toBe('Perfil de alumínio 2,4 m')
+  })
+
+  it('componente de estrutura: suporte hook em fibrocimento usa rótulo especial', () => {
+    const input = { ...defaultCatalogItemInput('estrutura'), tipoPeca: 'suporte_hook' as const, tipoTelhado: 'fibrocimento' as const, medida: '25 cm', formaVenda: 'pacote' as const, pecasPorPacote: 4 }
+    expect(gerarNomeCatalogItem(input)).toBe('Suporte hook fibrocimento/madeira 25 cm · pct 4')
+  })
+
+  it('componente de estrutura: grampo intermediário', () => {
+    const input = { ...defaultCatalogItemInput('estrutura'), tipoPeca: 'grampo_intermediario' as const, medida: '35 mm', formaVenda: 'pacote' as const, pecasPorPacote: 4 }
+    expect(gerarNomeCatalogItem(input)).toBe('Grampo intermediário 35 mm · pct 4')
+  })
+
+  it('componente de estrutura: telhado diferente de fibrocimento usa o rótulo padrão', () => {
+    const input = { ...defaultCatalogItemInput('estrutura'), tipoPeca: 'suporte_hook' as const, tipoTelhado: 'ceramico' as const, medida: '20 cm', formaVenda: 'pacote' as const, pecasPorPacote: 6 }
+    expect(gerarNomeCatalogItem(input)).toBe('Suporte hook cerâmico 20 cm · pct 6')
   })
 
   it('cabo comprado em rolo', () => {
@@ -90,6 +105,22 @@ describe('especificacaoCatalogItem', () => {
     })
     expect(especificacaoCatalogItem(item)).toBe('6 mm²')
   })
+
+  it('componente de estrutura combina telhado e medida', () => {
+    const item: CatalogItem = comBase({
+      categoria: 'estrutura', unidade: 'pacote', marca: '', tipoPeca: 'suporte_hook', tipoTelhado: 'fibrocimento',
+      medida: '25 cm', formaVenda: 'pacote', pecasPorPacote: 4, custoUnitario: 12, ativo: true,
+    })
+    expect(especificacaoCatalogItem(item)).toBe('telhado fibrocimento · 25 cm')
+  })
+
+  it('componente de estrutura sem telhado nem medida retorna vazio', () => {
+    const item: CatalogItem = comBase({
+      categoria: 'estrutura', unidade: 'pacote', marca: '', tipoPeca: 'chapa_aterramento', tipoTelhado: null,
+      medida: '', formaVenda: 'pacote', pecasPorPacote: 4, custoUnitario: 3, ativo: true,
+    })
+    expect(especificacaoCatalogItem(item)).toBe('')
+  })
 })
 
 describe('unidadeDisplay', () => {
@@ -107,6 +138,16 @@ describe('unidadeDisplay', () => {
     const item: CatalogItem = comBase({ categoria: 'outro', unidade: 'kits', descricao: 'Kit de fixação', custoUnitario: 50, ativo: true })
     expect(unidadeDisplay(item)).toBe('kits')
   })
+
+  it('componente de estrutura vendido em barra', () => {
+    const item: CatalogItem = comBase({ categoria: 'estrutura', unidade: 'barra', marca: '', tipoPeca: 'perfil', tipoTelhado: null, medida: '2,4 m', formaVenda: 'barra', pecasPorPacote: null, custoUnitario: 30, ativo: true })
+    expect(unidadeDisplay(item)).toBe('barras')
+  })
+
+  it('componente de estrutura vendido em pacote', () => {
+    const item: CatalogItem = comBase({ categoria: 'estrutura', unidade: 'pacote', marca: '', tipoPeca: 'grampo_terminal', tipoTelhado: null, medida: '', formaVenda: 'pacote', pecasPorPacote: 4, custoUnitario: 8, ativo: true })
+    expect(unidadeDisplay(item)).toBe('pacotes')
+  })
 })
 
 describe('calcularCustoPorMetro', () => {
@@ -120,5 +161,40 @@ describe('calcularCustoPorMetro', () => {
 
   it('rolo sem metrosPorRolo válido retorna 0', () => {
     expect(calcularCustoPorMetro({ apresentacao: 'rolo', custoUnitario: 87.5, metrosPorRolo: null })).toBe(0)
+  })
+})
+
+describe('normalizarCatalogItem', () => {
+  it('trata documento antigo de estrutura (sem tipoPeca) como kit_completo', () => {
+    const legado = comBase({
+      categoria: 'estrutura',
+      unidade: 'modulo',
+      marca: 'Romagnole',
+      tipoTelhado: 'ceramico',
+      custoUnitario: 120,
+      ativo: true,
+    })
+    expect(normalizarCatalogItem(legado)).toMatchObject({
+      categoria: 'estrutura',
+      tipoPeca: 'kit_completo',
+      tipoTelhado: 'ceramico',
+      medida: '',
+      formaVenda: 'unidade',
+      pecasPorPacote: null,
+      unidade: 'un',
+    })
+  })
+
+  it('não mexe em um documento de estrutura que já tem tipoPeca', () => {
+    const novo = comBase({
+      categoria: 'estrutura', unidade: 'barra', marca: '', tipoPeca: 'perfil', tipoTelhado: null,
+      medida: '2,4 m', formaVenda: 'barra', pecasPorPacote: null, custoUnitario: 30, ativo: true,
+    })
+    expect(normalizarCatalogItem(novo)).toEqual(novo)
+  })
+
+  it('não mexe em outras categorias', () => {
+    const modulo = comBase({ categoria: 'modulo', unidade: 'un', marca: 'X', potenciaWp: 550, areaM2: null, larguraM: null, tecnologia: null, garantiaProdutoAnos: null, garantiaPerformanceAnos: null, custoUnitario: 700, ativo: true })
+    expect(normalizarCatalogItem(modulo)).toEqual(modulo)
   })
 })

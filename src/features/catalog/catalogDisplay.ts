@@ -1,13 +1,13 @@
 import { formatDecimalBR } from '@/lib/format'
-import type { ApresentacaoCabo, CategoriaCatalogo, CatalogItem, DistributiveOmit } from '@/types/firestore'
-import { TIPO_CABO_LABELS, TIPO_INVERSOR_LABELS, TIPO_PROTECAO_LABELS, TIPO_TELHADO_LABELS } from './catalogLabels'
+import type { ApresentacaoCabo, CategoriaCatalogo, CatalogItem, DistributiveOmit, TipoTelhado } from '@/types/firestore'
+import { TIPO_CABO_LABELS, TIPO_INVERSOR_LABELS, TIPO_PECA_ESTRUTURA_LABELS, TIPO_PROTECAO_LABELS, TIPO_TELHADO_LABELS } from './catalogLabels'
 
 export type CatalogItemInput = DistributiveOmit<CatalogItem, 'id' | 'nome' | 'criadoEm' | 'atualizadoEm' | 'custoPorMetro'>
 
 const PADROES: Record<CategoriaCatalogo, CatalogItemInput> = {
   modulo: { categoria: 'modulo', unidade: 'un', marca: '', potenciaWp: 0, areaM2: null, larguraM: null, tecnologia: null, garantiaProdutoAnos: null, garantiaPerformanceAnos: null, custoUnitario: 0, ativo: true },
   inversor: { categoria: 'inversor', unidade: 'un', marca: '', tipo: 'string', potenciaKw: 0, fase: 'mono', monitoramentoWifi: false, garantiaAnos: null, mppts: null, custoUnitario: 0, ativo: true },
-  estrutura: { categoria: 'estrutura', unidade: 'modulo', marca: '', tipoTelhado: 'ceramico', custoUnitario: 0, ativo: true },
+  estrutura: { categoria: 'estrutura', unidade: 'un', marca: '', tipoPeca: 'perfil', tipoTelhado: null, medida: '', formaVenda: 'unidade', pecasPorPacote: null, custoUnitario: 0, ativo: true },
   cabo: { categoria: 'cabo', unidade: 'm', tipo: 'cc_solar', bitolaMm2: 6, cor: 'preto', apresentacao: 'metro', metrosPorRolo: null, custoUnitario: 0, ativo: true },
   mc4: { categoria: 'mc4', unidade: 'par', marca: '', custoUnitario: 0, ativo: true },
   stringbox: { categoria: 'stringbox', unidade: 'un', marca: '', entradas: 1, custoUnitario: 0, ativo: true },
@@ -33,8 +33,18 @@ export function gerarNomeCatalogItem(input: CatalogItemInput): string {
       return `Módulo ${input.marca} ${input.potenciaWp} Wp${input.tecnologia ? ' ' + input.tecnologia : ''}`.trim()
     case 'inversor':
       return `Inversor ${input.marca} ${formatDecimalBR(input.potenciaKw)} kW`.trim()
-    case 'estrutura':
-      return `Estrutura para telhado ${TIPO_TELHADO_LABELS[input.tipoTelhado].toLowerCase()}`
+    case 'estrutura': {
+      const label = TIPO_PECA_ESTRUTURA_LABELS[input.tipoPeca]
+      const telhado =
+        input.tipoPeca === 'suporte_hook' && input.tipoTelhado === 'fibrocimento'
+          ? ' fibrocimento/madeira'
+          : input.tipoTelhado
+            ? ` ${TIPO_TELHADO_LABELS[input.tipoTelhado].toLowerCase()}`
+            : ''
+      const medida = input.medida ? ` ${input.medida}` : ''
+      const pacote = input.formaVenda === 'pacote' && input.pecasPorPacote ? ` · pct ${input.pecasPorPacote}` : ''
+      return `${label}${telhado}${medida}${pacote}`
+    }
     case 'cabo': {
       const kv = input.tipo === 'cc_solar' ? ' 1 kV' : ''
       const rolo = input.apresentacao === 'rolo' && input.metrosPorRolo ? ` · rolo ${input.metrosPorRolo} m` : ''
@@ -60,8 +70,12 @@ export function especificacaoCatalogItem(item: CatalogItem): string {
       return ''
     case 'inversor':
       return item.garantiaAnos != null ? `garantia de ${item.garantiaAnos} anos` : TIPO_INVERSOR_LABELS[item.tipo]
-    case 'estrutura':
-      return `telhado ${TIPO_TELHADO_LABELS[item.tipoTelhado].toLowerCase()}`
+    case 'estrutura': {
+      const partes: string[] = []
+      if (item.tipoTelhado) partes.push(`telhado ${TIPO_TELHADO_LABELS[item.tipoTelhado].toLowerCase()}`)
+      if (item.medida) partes.push(item.medida)
+      return partes.join(' · ')
+    }
     case 'cabo':
       return `${item.bitolaMm2} mm²`
     case 'mc4':
@@ -82,6 +96,8 @@ export function unidadeDisplay(item: CatalogItem): string {
       return 'metros'
     case 'mc4':
       return 'pares'
+    case 'estrutura':
+      return item.unidade === 'pacote' ? 'pacotes' : item.unidade === 'barra' ? 'barras' : 'unidades'
     case 'outro':
       return item.unidade || 'unidades'
     default:
@@ -95,4 +111,22 @@ export function calcularCustoPorMetro(input: { apresentacao: ApresentacaoCabo; c
   if (input.apresentacao === 'metro') return input.custoUnitario
   if (!input.metrosPorRolo || input.metrosPorRolo <= 0) return 0
   return input.custoUnitario / input.metrosPorRolo
+}
+
+/** Documentos antigos da categoria 'estrutura' não têm tipoPeca (formato pré-reforma do
+ * catálogo). Normaliza em memória para tipoPeca='kit_completo', sem tocar no Firestore — se o
+ * item for reaberto e salvo, passa a gravar no formato novo. */
+export function normalizarCatalogItem(raw: CatalogItem): CatalogItem {
+  if (raw.categoria === 'estrutura' && !('tipoPeca' in raw)) {
+    return {
+      ...raw,
+      tipoPeca: 'kit_completo',
+      tipoTelhado: (raw as { tipoTelhado?: TipoTelhado }).tipoTelhado ?? null,
+      medida: '',
+      formaVenda: 'unidade',
+      pecasPorPacote: null,
+      unidade: 'un',
+    }
+  }
+  return raw
 }
