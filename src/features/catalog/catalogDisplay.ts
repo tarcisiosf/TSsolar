@@ -1,14 +1,14 @@
 import { formatDecimalBR } from '@/lib/format'
-import type { CategoriaCatalogo, CatalogItem, DistributiveOmit } from '@/types/firestore'
+import type { ApresentacaoCabo, CategoriaCatalogo, CatalogItem, DistributiveOmit } from '@/types/firestore'
 import { TIPO_CABO_LABELS, TIPO_INVERSOR_LABELS, TIPO_PROTECAO_LABELS, TIPO_TELHADO_LABELS } from './catalogLabels'
 
-export type CatalogItemInput = DistributiveOmit<CatalogItem, 'id' | 'nome' | 'criadoEm' | 'atualizadoEm'>
+export type CatalogItemInput = DistributiveOmit<CatalogItem, 'id' | 'nome' | 'criadoEm' | 'atualizadoEm' | 'custoPorMetro'>
 
 const PADROES: Record<CategoriaCatalogo, CatalogItemInput> = {
   modulo: { categoria: 'modulo', unidade: 'un', marca: '', potenciaWp: 0, areaM2: null, larguraM: null, tecnologia: null, garantiaProdutoAnos: null, garantiaPerformanceAnos: null, custoUnitario: 0, ativo: true },
   inversor: { categoria: 'inversor', unidade: 'un', marca: '', tipo: 'string', potenciaKw: 0, fase: 'mono', monitoramentoWifi: false, garantiaAnos: null, mppts: null, custoUnitario: 0, ativo: true },
   estrutura: { categoria: 'estrutura', unidade: 'modulo', marca: '', tipoTelhado: 'ceramico', custoUnitario: 0, ativo: true },
-  cabo: { categoria: 'cabo', unidade: 'm', tipo: 'cc_solar', bitolaMm2: 6, custoUnitario: 0, ativo: true },
+  cabo: { categoria: 'cabo', unidade: 'm', tipo: 'cc_solar', bitolaMm2: 6, cor: 'preto', apresentacao: 'metro', metrosPorRolo: null, custoUnitario: 0, ativo: true },
   mc4: { categoria: 'mc4', unidade: 'par', marca: '', custoUnitario: 0, ativo: true },
   stringbox: { categoria: 'stringbox', unidade: 'un', marca: '', entradas: 1, custoUnitario: 0, ativo: true },
   protecao: { categoria: 'protecao', unidade: 'un', tipo: 'disjuntor', correnteA: 0, custoUnitario: 0, ativo: true },
@@ -35,8 +35,11 @@ export function gerarNomeCatalogItem(input: CatalogItemInput): string {
       return `Inversor ${input.marca} ${formatDecimalBR(input.potenciaKw)} kW`.trim()
     case 'estrutura':
       return `Estrutura para telhado ${TIPO_TELHADO_LABELS[input.tipoTelhado].toLowerCase()}`
-    case 'cabo':
-      return `Cabo solar ${TIPO_CABO_LABELS[input.tipo]} ${input.bitolaMm2} mm²`
+    case 'cabo': {
+      const kv = input.tipo === 'cc_solar' ? ' 1 kV' : ''
+      const rolo = input.apresentacao === 'rolo' && input.metrosPorRolo ? ` · rolo ${input.metrosPorRolo} m` : ''
+      return `Cabo solar ${TIPO_CABO_LABELS[input.tipo]} ${input.bitolaMm2} mm²${kv} ${input.cor}${rolo}`
+    }
     case 'mc4':
       return input.marca ? `Conector MC4 ${input.marca}` : 'Conector MC4'
     case 'stringbox':
@@ -84,4 +87,12 @@ export function unidadeDisplay(item: CatalogItem): string {
     default:
       return 'unidades'
   }
+}
+
+/** custoPorMetro do cabo — sempre derivado, nunca digitado: preço por metro direto, ou preço do
+ * rolo dividido pelos metros do rolo. */
+export function calcularCustoPorMetro(input: { apresentacao: ApresentacaoCabo; custoUnitario: number; metrosPorRolo: number | null }): number {
+  if (input.apresentacao === 'metro') return input.custoUnitario
+  if (!input.metrosPorRolo || input.metrosPorRolo <= 0) return 0
+  return input.custoUnitario / input.metrosPorRolo
 }

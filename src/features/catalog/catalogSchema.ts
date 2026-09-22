@@ -45,6 +45,9 @@ const caboSchema = z.object({
   unidade: z.literal('m'),
   tipo: z.enum(['cc_solar', 'ca']),
   bitolaMm2: z.union(BITOLAS_CABO.map((b) => z.literal(b)) as [z.ZodLiteral<number>, z.ZodLiteral<number>, ...z.ZodLiteral<number>[]]),
+  cor: z.enum(['preto', 'vermelho', 'outro']),
+  apresentacao: z.enum(['metro', 'rolo']),
+  metrosPorRolo: z.number().positive().nullable(),
   ...base,
 })
 
@@ -87,7 +90,11 @@ export const catalogItemSchema = z.discriminatedUnion('categoria', [
   stringboxSchema,
   protecaoSchema,
   outroSchema,
-])
+]).superRefine((val, ctx) => {
+  if (val.categoria === 'cabo' && val.apresentacao === 'rolo' && (!val.metrosPorRolo || val.metrosPorRolo <= 0)) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['metrosPorRolo'], message: 'Informe os metros por rolo' })
+  }
+})
 
 /** Valida o payload do formulário e devolve um mapa campo -> primeira mensagem de erro (vazio se válido). */
 export function validarCatalogItem(input: unknown): Record<string, string> {

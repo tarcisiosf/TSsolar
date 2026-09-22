@@ -1,6 +1,8 @@
 import type {
+  ApresentacaoCabo,
   BitolaCaboMm2,
   CategoriaCatalogo,
+  CorCabo,
   Ligacao,
   TecnologiaModulo,
   TipoCabo,
@@ -23,11 +25,10 @@ export const CATEGORIA_LABELS: Record<CategoriaCatalogo, string> = {
 export const CATEGORIAS: CategoriaCatalogo[] = ['modulo', 'inversor', 'estrutura', 'cabo', 'mc4', 'stringbox', 'protecao', 'outro']
 
 /** Unidade de custo fixa por categoria — mostrada como texto no formulário, exceto em "outro". */
-export const UNIDADE_CATEGORIA_LABELS: Record<Exclude<CategoriaCatalogo, 'outro'>, string> = {
+export const UNIDADE_CATEGORIA_LABELS: Record<Exclude<CategoriaCatalogo, 'outro' | 'cabo'>, string> = {
   modulo: 'por unidade',
   inversor: 'por unidade',
   estrutura: 'por módulo',
-  cabo: 'por metro',
   mc4: 'por par',
   stringbox: 'por unidade',
   protecao: 'por unidade',
@@ -50,6 +51,17 @@ export const TIPO_TELHADO_LABELS: Record<TipoTelhado, string> = {
 export const TIPO_CABO_LABELS: Record<TipoCabo, string> = {
   cc_solar: 'CC',
   ca: 'CA',
+}
+
+export const COR_CABO_LABELS: Record<CorCabo, string> = {
+  preto: 'Preto',
+  vermelho: 'Vermelho',
+  outro: 'Outro',
+}
+
+export const APRESENTACAO_CABO_LABELS: Record<ApresentacaoCabo, string> = {
+  metro: 'Metro',
+  rolo: 'Rolo',
 }
 
 export const TIPO_PROTECAO_LABELS: Record<TipoProtecao, string> = {

@@ -46,4 +46,14 @@ describe('validarCatalogItem', () => {
     const comMppts = validarCatalogItem({ ...defaultCatalogItemInput('inversor'), marca: 'Sofar', potenciaKw: 4, mppts: 1, custoUnitario: 100 })
     expect(comMppts).toEqual({})
   })
+
+  it('cabo em rolo sem metrosPorRolo gera erro', () => {
+    const erros = validarCatalogItem({ ...defaultCatalogItemInput('cabo'), apresentacao: 'rolo', metrosPorRolo: null, custoUnitario: 80 })
+    expect(erros.metrosPorRolo).toBeTruthy()
+  })
+
+  it('cabo por metro não exige metrosPorRolo', () => {
+    const erros = validarCatalogItem({ ...defaultCatalogItemInput('cabo'), apresentacao: 'metro', metrosPorRolo: null, custoUnitario: 3.5 })
+    expect(erros.metrosPorRolo).toBeUndefined()
+  })
 })

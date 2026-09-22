@@ -99,11 +99,18 @@ export interface CatalogItemEstrutura extends CatalogItemBase {
   tipoTelhado: TipoTelhado
 }
 
+export type CorCabo = 'preto' | 'vermelho' | 'outro'
+export type ApresentacaoCabo = 'metro' | 'rolo'
+
 export interface CatalogItemCabo extends CatalogItemBase {
   categoria: 'cabo'
   unidade: 'm'
   tipo: TipoCabo
   bitolaMm2: BitolaCaboMm2
+  cor: CorCabo
+  apresentacao: ApresentacaoCabo
+  metrosPorRolo: number | null
+  custoPorMetro: number
 }
 
 export interface CatalogItemMc4 extends CatalogItemBase {
