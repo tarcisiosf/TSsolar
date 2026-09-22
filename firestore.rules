@@ -28,6 +28,10 @@ service cloud.firestore {
       allow read, write: if isAdmin();
     }
 
+    match /kits/{kitId} {
+      allow read, write: if isAdmin();
+    }
+
     match /clients/{clientId} {
       allow read, write: if isAdmin();
     }

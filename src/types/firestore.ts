@@ -164,6 +164,19 @@ export type CatalogItem =
 /** `Omit` que distribui sobre uniões discriminadas (o `Omit` nativo colapsa em `keyof` da união e quebraria o discriminante). */
 export type DistributiveOmit<T, K extends PropertyKey> = T extends unknown ? Omit<T, K> : never
 
+export interface KitItem {
+  catalogId: string
+  quantidadePadrao: number | null
+}
+
+export interface Kit {
+  id: string
+  nome: string
+  descricao: string
+  itens: KitItem[]
+  ativo: boolean
+}
+
 export interface Client {
   id: string
   nome: string
