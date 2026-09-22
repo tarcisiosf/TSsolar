@@ -15,6 +15,16 @@ describe('gerarNomeCatalogItem', () => {
     expect(gerarNomeCatalogItem(input)).toBe('Módulo Astroenergy 725 Wp')
   })
 
+  it('módulo com tecnologia', () => {
+    const input = { ...defaultCatalogItemInput('modulo'), marca: 'Leapton', potenciaWp: 620, tecnologia: 'bifacial' as const }
+    expect(gerarNomeCatalogItem(input)).toBe('Módulo Leapton 620 Wp bifacial')
+  })
+
+  it('módulo sem tecnologia não tem sufixo', () => {
+    const input = { ...defaultCatalogItemInput('modulo'), marca: 'Astroenergy', potenciaWp: 725 }
+    expect(gerarNomeCatalogItem(input)).toBe('Módulo Astroenergy 725 Wp')
+  })
+
   it('inversor com potência decimal', () => {
     const input = { ...defaultCatalogItemInput('inversor'), marca: 'SOFAR', potenciaKw: 4 }
     expect(gerarNomeCatalogItem(input)).toBe('Inversor SOFAR 4 kW')
@@ -45,6 +55,8 @@ describe('especificacaoCatalogItem', () => {
       marca: 'Astroenergy',
       potenciaWp: 725,
       areaM2: null,
+      larguraM: null,
+      tecnologia: null,
       garantiaProdutoAnos: 12,
       garantiaPerformanceAnos: 30,
       custoUnitario: 900,

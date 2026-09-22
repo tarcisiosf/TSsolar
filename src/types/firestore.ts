@@ -8,6 +8,7 @@ export type TipoTelhado = 'ceramico' | 'fibrocimento' | 'metalico' | 'laje' | 's
 export type TipoCabo = 'cc_solar' | 'ca'
 export type TipoProtecao = 'disjuntor' | 'dps'
 export type BitolaCaboMm2 = 4 | 6 | 10 | 16
+export type TecnologiaModulo = 'monofacial' | 'bifacial'
 export type StatusItem = 'incluso' | 'fornecido_cliente' | 'nao_incluso'
 export type StatusProposta = 'rascunho' | 'enviada' | 'negociacao' | 'fechada' | 'perdida'
 export type ModoPrecificacao = 'margem' | 'manual'
@@ -73,6 +74,8 @@ export interface CatalogItemModulo extends CatalogItemBase {
   marca: string
   potenciaWp: number
   areaM2: number | null
+  larguraM: number | null
+  tecnologia: TecnologiaModulo | null
   garantiaProdutoAnos: number | null
   garantiaPerformanceAnos: number | null
 }

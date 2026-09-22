@@ -5,7 +5,7 @@ import { TIPO_CABO_LABELS, TIPO_INVERSOR_LABELS, TIPO_PROTECAO_LABELS, TIPO_TELH
 export type CatalogItemInput = DistributiveOmit<CatalogItem, 'id' | 'nome' | 'criadoEm' | 'atualizadoEm'>
 
 const PADROES: Record<CategoriaCatalogo, CatalogItemInput> = {
-  modulo: { categoria: 'modulo', unidade: 'un', marca: '', potenciaWp: 0, areaM2: null, garantiaProdutoAnos: null, garantiaPerformanceAnos: null, custoUnitario: 0, ativo: true },
+  modulo: { categoria: 'modulo', unidade: 'un', marca: '', potenciaWp: 0, areaM2: null, larguraM: null, tecnologia: null, garantiaProdutoAnos: null, garantiaPerformanceAnos: null, custoUnitario: 0, ativo: true },
   inversor: { categoria: 'inversor', unidade: 'un', marca: '', tipo: 'string', potenciaKw: 0, fase: 'mono', monitoramentoWifi: false, garantiaAnos: null, custoUnitario: 0, ativo: true },
   estrutura: { categoria: 'estrutura', unidade: 'modulo', marca: '', tipoTelhado: 'ceramico', custoUnitario: 0, ativo: true },
   cabo: { categoria: 'cabo', unidade: 'm', tipo: 'cc_solar', bitolaMm2: 6, custoUnitario: 0, ativo: true },
@@ -30,7 +30,7 @@ export function defaultCatalogItemInput<C extends CategoriaCatalogo>(
 export function gerarNomeCatalogItem(input: CatalogItemInput): string {
   switch (input.categoria) {
     case 'modulo':
-      return `Módulo ${input.marca} ${input.potenciaWp} Wp`.trim()
+      return `Módulo ${input.marca} ${input.potenciaWp} Wp${input.tecnologia ? ' ' + input.tecnologia : ''}`.trim()
     case 'inversor':
       return `Inversor ${input.marca} ${formatDecimalBR(input.potenciaKw)} kW`.trim()
     case 'estrutura':

@@ -2,6 +2,7 @@ import type {
   BitolaCaboMm2,
   CategoriaCatalogo,
   Ligacao,
+  TecnologiaModulo,
   TipoCabo,
   TipoInversor,
   TipoProtecao,
@@ -60,6 +61,11 @@ export const FASE_LABELS: Record<Ligacao, string> = {
   mono: 'Monofásico',
   bi: 'Bifásico',
   tri: 'Trifásico',
+}
+
+export const TECNOLOGIA_MODULO_LABELS: Record<TecnologiaModulo, string> = {
+  monofacial: 'Monofacial',
+  bifacial: 'Bifacial',
 }
 
 export const BITOLAS_CABO: BitolaCaboMm2[] = [4, 6, 10, 16]

@@ -29,4 +29,14 @@ describe('validarCatalogItem', () => {
     const erros = validarCatalogItem({ ...defaultCatalogItemInput('mc4'), custoUnitario: -1 })
     expect(erros.custoUnitario).toBeTruthy()
   })
+
+  it('módulo aceita largura e tecnologia nulas', () => {
+    const erros = validarCatalogItem({ ...defaultCatalogItemInput('modulo'), marca: 'Astroenergy', potenciaWp: 725, custoUnitario: 900 })
+    expect(erros).toEqual({})
+  })
+
+  it('módulo com largura negativa gera erro', () => {
+    const erros = validarCatalogItem({ ...defaultCatalogItemInput('modulo'), marca: 'Astroenergy', potenciaWp: 725, custoUnitario: 900, larguraM: -1 })
+    expect(erros.larguraM).toBeTruthy()
+  })
 })

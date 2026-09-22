@@ -12,6 +12,8 @@ const moduloSchema = z.object({
   marca: z.string().min(1, 'Informe a marca'),
   potenciaWp: z.number().int('Informe um número inteiro de Wp').positive('Informe a potência em Wp'),
   areaM2: z.number().positive('Informe uma área maior que zero').nullable(),
+  larguraM: z.number().positive('Informe uma largura maior que zero').nullable(),
+  tecnologia: z.enum(['monofacial', 'bifacial']).nullable(),
   garantiaProdutoAnos: z.number().int().nonnegative().nullable(),
   garantiaPerformanceAnos: z.number().int().nonnegative().nullable(),
   ...base,
