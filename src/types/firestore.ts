@@ -56,6 +56,8 @@ export interface CalcSettings {
   aliquotaSimples: number
   comissaoPadrao: number
   margemPadrao: number
+  larguraModuloPadraoM: number
+  espacamentoHookM: number
   proximoNumero: number
 }
 

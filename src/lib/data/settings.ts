@@ -38,6 +38,8 @@ export const DEFAULT_CALC: CalcSettings = {
   aliquotaSimples: 0.06,
   comissaoPadrao: 0,
   margemPadrao: 0.25,
+  larguraModuloPadraoM: 1.15,
+  espacamentoHookM: 1.2,
   proximoNumero: 1,
 }
 

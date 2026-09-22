@@ -157,6 +157,28 @@ export function CalcForm({ initial }: { initial: CalcSettings }) {
         </div>
       </section>
 
+      <section>
+        <h3 className="mb-3 text-sm font-bold uppercase tracking-wide text-muted">Estrutura</h3>
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+          <Input
+            label="Largura padrão do módulo"
+            type="number"
+            step="0.01"
+            suffix="m"
+            value={form.larguraModuloPadraoM}
+            onChange={(e) => set('larguraModuloPadraoM', Number(e.target.value))}
+          />
+          <Input
+            label="Espaçamento do hook"
+            type="number"
+            step="0.1"
+            suffix="m"
+            value={form.espacamentoHookM}
+            onChange={(e) => set('espacamentoHookM', Number(e.target.value))}
+          />
+        </div>
+      </section>
+
       <Button variant="primary" onClick={handleSalvar} loading={status === 'saving'} className="self-start">
         Salvar parâmetros de cálculo
       </Button>
