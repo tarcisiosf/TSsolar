@@ -5,40 +5,42 @@ import { Segmented } from '@/components/ui/Segmented'
 import { Select } from '@/components/ui/Select'
 import { formatBRL } from '@/lib/format'
 import { novoItemId } from '@/lib/data/proposals'
-import type { CatalogItem, ProposalItem, ProposalSistema, StatusItem } from '@/types/firestore'
+import type { CalcSettings, CatalogItem, Kit, ProposalItem, ProposalSistema, StatusItem } from '@/types/firestore'
 import { CATEGORIA_LABELS } from '@/features/catalog/catalogLabels'
 import { especificacaoCatalogItem, unidadeDisplay } from '@/features/catalog/catalogDisplay'
+import { quantidadeSugerida } from '../../quantidadeSugerida'
 
 interface MateriaisStepProps {
   itens: ProposalItem[]
   onChange: (itens: ProposalItem[]) => void
   sistema: ProposalSistema
   catalogo: CatalogItem[]
+  kits: Kit[]
+  calc: CalcSettings
 }
 
-/** Quantidade sugerida ao adicionar um item do catálogo — editável em seguida pelo usuário. */
-function quantidadeSugerida(catalogItem: CatalogItem, sistema: ProposalSistema): number {
-  if (catalogItem.categoria === 'estrutura') return sistema.qtdModulos || 1
-  // MC4: 1 par por string (o sistema ainda não modela "número de strings" — assume 1) + 2 pares de reserva.
-  if (catalogItem.categoria === 'mc4') return 3
-  return 1
-}
-
-function itemDeCatalogo(catalogItem: CatalogItem, sistema: ProposalSistema): ProposalItem {
+function itemDeCatalogo(
+  catalogItem: CatalogItem,
+  sistema: ProposalSistema,
+  catalogo: CatalogItem[],
+  calc: CalcSettings,
+  quantidadePadraoKit?: number | null,
+): ProposalItem {
   return {
     id: novoItemId(),
     catalogId: catalogItem.id,
     descricao: catalogItem.nome,
     especificacao: especificacaoCatalogItem(catalogItem),
-    quantidade: quantidadeSugerida(catalogItem, sistema),
+    quantidade: quantidadeSugerida(catalogItem, sistema, catalogo, calc, quantidadePadraoKit),
     unidade: unidadeDisplay(catalogItem),
-    custoUnitario: catalogItem.custoUnitario,
+    custoUnitario: catalogItem.categoria === 'cabo' ? catalogItem.custoPorMetro : catalogItem.custoUnitario,
     status: 'incluso',
   }
 }
 
-export function MateriaisStep({ itens, onChange, sistema, catalogo }: MateriaisStepProps) {
+export function MateriaisStep({ itens, onChange, sistema, catalogo, kits, calc }: MateriaisStepProps) {
   const [catalogSelecionado, setCatalogSelecionado] = useState('')
+  const [kitSelecionado, setKitSelecionado] = useState('')
 
   // Garante que módulo e inversor escolhidos no passo anterior apareçam aqui automaticamente.
   useEffect(() => {
@@ -48,14 +50,14 @@ export function MateriaisStep({ itens, onChange, sistema, catalogo }: MateriaisS
     if (sistema.moduloId && !novosItens.some((i) => i.catalogId === sistema.moduloId)) {
       const modulo = catalogo.find((c) => c.id === sistema.moduloId)
       if (modulo) {
-        novosItens = [...novosItens, { ...itemDeCatalogo(modulo, sistema), quantidade: sistema.qtdModulos || 1 }]
+        novosItens = [...novosItens, itemDeCatalogo(modulo, sistema, catalogo, calc)]
         mudou = true
       }
     }
     if (sistema.inversorId && !novosItens.some((i) => i.catalogId === sistema.inversorId)) {
       const inversor = catalogo.find((c) => c.id === sistema.inversorId)
       if (inversor) {
-        novosItens = [...novosItens, itemDeCatalogo(inversor, sistema)]
+        novosItens = [...novosItens, itemDeCatalogo(inversor, sistema, catalogo, calc)]
         mudou = true
       }
     }
@@ -74,8 +76,27 @@ export function MateriaisStep({ itens, onChange, sistema, catalogo }: MateriaisS
   function adicionarDoCatalogo() {
     const catalogItem = catalogo.find((c) => c.id === catalogSelecionado)
     if (!catalogItem) return
-    onChange([...itens, itemDeCatalogo(catalogItem, sistema)])
+    onChange([...itens, itemDeCatalogo(catalogItem, sistema, catalogo, calc)])
     setCatalogSelecionado('')
+  }
+
+  function adicionarKit() {
+    const kit = kits.find((k) => k.id === kitSelecionado)
+    if (!kit) return
+    let novosItens = itens
+    for (const kitItem of kit.itens) {
+      const catalogItem = catalogo.find((c) => c.id === kitItem.catalogId)
+      if (!catalogItem) continue
+      const existente = novosItens.find((i) => i.catalogId === catalogItem.id)
+      if (existente) {
+        const quantidade = quantidadeSugerida(catalogItem, sistema, catalogo, calc, kitItem.quantidadePadrao)
+        novosItens = novosItens.map((i) => (i.id === existente.id ? { ...i, quantidade: i.quantidade + quantidade } : i))
+      } else {
+        novosItens = [...novosItens, itemDeCatalogo(catalogItem, sistema, catalogo, calc, kitItem.quantidadePadrao)]
+      }
+    }
+    onChange(novosItens)
+    setKitSelecionado('')
   }
 
   function adicionarAvulso() {
@@ -90,6 +111,7 @@ export function MateriaisStep({ itens, onChange, sistema, catalogo }: MateriaisS
   return (
     <div className="flex flex-col gap-4">
       <h2 className="text-lg font-bold text-graphite">Materiais</h2>
+      <p className="text-xs text-muted">Quantidades sugeridas com base no número de módulos — confira na vistoria.</p>
 
       <div className="flex flex-col gap-3">
         {itens.map((item) => (
@@ -143,6 +165,25 @@ export function MateriaisStep({ itens, onChange, sistema, catalogo }: MateriaisS
             </div>
           </div>
         ))}
+      </div>
+
+      <div className="flex flex-col gap-2 rounded-card border border-dashed border-line p-4 sm:flex-row sm:items-end">
+        <div className="flex-1">
+          <Select
+            label="Adicionar kit"
+            value={kitSelecionado}
+            onChange={(e) => setKitSelecionado(e.target.value)}
+            options={[{ value: '', label: 'Selecione um kit' }, ...kits.filter((k) => k.ativo).map((k) => ({ value: k.id, label: k.nome }))]}
+          />
+        </div>
+        <button
+          type="button"
+          onClick={adicionarKit}
+          disabled={!kitSelecionado}
+          className="flex h-12 items-center justify-center gap-2 rounded-field border border-[#D9D3C7] bg-surface px-4 text-sm font-bold text-graphite hover:bg-chip disabled:opacity-50"
+        >
+          <Plus className="h-4 w-4" aria-hidden /> Adicionar kit
+        </button>
       </div>
 
       <div className="flex flex-col gap-2 rounded-card border border-dashed border-line p-4 sm:flex-row sm:items-end">

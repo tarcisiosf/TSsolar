@@ -6,6 +6,7 @@ import { Sheet } from '@/components/ui/Sheet'
 import { SavedIndicator, type SaveStatus } from '@/components/ui/SavedIndicator'
 import { SunLogo } from '@/components/ui/SunLogo'
 import { subscribeCatalog } from '@/lib/data/catalog'
+import { subscribeKits } from '@/lib/data/kits'
 import { subscribeClients } from '@/lib/data/clients'
 import { criarPropostaVazia, createProposal, publicarProposta, saveProposalFields, subscribeProposal } from '@/lib/data/proposals'
 import { getCalcSettings, getCompanySettings } from '@/lib/data/settings'
@@ -13,7 +14,7 @@ import { calcularResultadosProposta } from '@/lib/calc/proposalResultados'
 import { toPublicSnapshot } from '@/lib/calc/toPublicSnapshot'
 import { useDebouncedEffect } from '@/lib/useDebouncedEffect'
 import { formatBRL } from '@/lib/format'
-import type { CalcSettings, CatalogItem, Client, CompanySettings, Proposal, ProposalEntrada, ProposalItem, ProposalPrecificacao, ProposalServicos, ProposalSistema, PublicProposal } from '@/types/firestore'
+import type { CalcSettings, CatalogItem, Client, CompanySettings, Kit, Proposal, ProposalEntrada, ProposalItem, ProposalPrecificacao, ProposalServicos, ProposalSistema, PublicProposal } from '@/types/firestore'
 import { ClienteStep } from './steps/ClienteStep'
 import { ConsumoStep } from './steps/ConsumoStep'
 import { SistemaStep } from './steps/SistemaStep'
@@ -66,6 +67,7 @@ export function ProposalEditorPage() {
   const [company, setCompany] = useState<CompanySettings | null>(null)
   const [clients, setClients] = useState<Client[]>([])
   const [catalogo, setCatalogo] = useState<CatalogItem[]>([])
+  const [kits, setKits] = useState<Kit[]>([])
   const [step, setStep] = useState(0)
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle')
   const [resumoAberto, setResumoAberto] = useState(false)
@@ -105,6 +107,8 @@ export function ProposalEditorPage() {
   }, [])
 
   useEffect(() => subscribeCatalog((itens) => setCatalogo(itens.filter((i) => i.ativo))), [])
+
+  useEffect(() => subscribeKits((ks) => setKits(ks.filter((k) => k.ativo))), [])
 
   const modulos = useMemo(() => catalogo.filter((c) => c.categoria === 'modulo'), [catalogo])
   const inversores = useMemo(() => catalogo.filter((c) => c.categoria === 'inversor'), [catalogo])
@@ -222,7 +226,16 @@ export function ProposalEditorPage() {
               inversores={inversores}
             />
           )}
-          {step === 3 && <MateriaisStep itens={draft.itens} onChange={(itens) => setDraft({ ...draft, itens })} sistema={draft.sistema} catalogo={catalogo} />}
+          {step === 3 && (
+            <MateriaisStep
+              itens={draft.itens}
+              onChange={(itens) => setDraft({ ...draft, itens })}
+              sistema={draft.sistema}
+              catalogo={catalogo}
+              kits={kits}
+              calc={calc}
+            />
+          )}
           {step === 4 && <ServicosStep servicos={draft.servicos} onChange={(servicos) => setDraft({ ...draft, servicos })} />}
           {step === 5 && (
             <PrecoStep
