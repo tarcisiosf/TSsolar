@@ -7,6 +7,7 @@ import { formatBRL } from '@/lib/format'
 import { novoItemId } from '@/lib/data/proposals'
 import type { CatalogItem, ProposalItem, ProposalSistema, StatusItem } from '@/types/firestore'
 import { CATEGORIA_LABELS } from '@/features/catalog/catalogLabels'
+import { especificacaoCatalogItem, unidadeDisplay } from '@/features/catalog/catalogDisplay'
 
 interface MateriaisStepProps {
   itens: ProposalItem[]
@@ -15,14 +16,22 @@ interface MateriaisStepProps {
   catalogo: CatalogItem[]
 }
 
-function itemDeCatalogo(catalogItem: CatalogItem, quantidade = 1): ProposalItem {
+/** Quantidade sugerida ao adicionar um item do catálogo — editável em seguida pelo usuário. */
+function quantidadeSugerida(catalogItem: CatalogItem, sistema: ProposalSistema): number {
+  if (catalogItem.categoria === 'estrutura') return sistema.qtdModulos || 1
+  // MC4: 1 par por string (o sistema ainda não modela "número de strings" — assume 1) + 2 pares de reserva.
+  if (catalogItem.categoria === 'mc4') return 3
+  return 1
+}
+
+function itemDeCatalogo(catalogItem: CatalogItem, sistema: ProposalSistema): ProposalItem {
   return {
     id: novoItemId(),
     catalogId: catalogItem.id,
-    descricao: `${catalogItem.marca} ${catalogItem.modelo}`,
-    especificacao: catalogItem.potenciaW ? `${catalogItem.potenciaW} W` : '',
-    quantidade,
-    unidade: catalogItem.unidade,
+    descricao: catalogItem.nome,
+    especificacao: especificacaoCatalogItem(catalogItem),
+    quantidade: quantidadeSugerida(catalogItem, sistema),
+    unidade: unidadeDisplay(catalogItem),
     custoUnitario: catalogItem.custoUnitario,
     status: 'incluso',
   }
@@ -39,14 +48,14 @@ export function MateriaisStep({ itens, onChange, sistema, catalogo }: MateriaisS
     if (sistema.moduloId && !novosItens.some((i) => i.catalogId === sistema.moduloId)) {
       const modulo = catalogo.find((c) => c.id === sistema.moduloId)
       if (modulo) {
-        novosItens = [...novosItens, itemDeCatalogo(modulo, sistema.qtdModulos)]
+        novosItens = [...novosItens, { ...itemDeCatalogo(modulo, sistema), quantidade: sistema.qtdModulos || 1 }]
         mudou = true
       }
     }
     if (sistema.inversorId && !novosItens.some((i) => i.catalogId === sistema.inversorId)) {
       const inversor = catalogo.find((c) => c.id === sistema.inversorId)
       if (inversor) {
-        novosItens = [...novosItens, itemDeCatalogo(inversor)]
+        novosItens = [...novosItens, itemDeCatalogo(inversor, sistema)]
         mudou = true
       }
     }
@@ -65,14 +74,14 @@ export function MateriaisStep({ itens, onChange, sistema, catalogo }: MateriaisS
   function adicionarDoCatalogo() {
     const catalogItem = catalogo.find((c) => c.id === catalogSelecionado)
     if (!catalogItem) return
-    onChange([...itens, itemDeCatalogo(catalogItem)])
+    onChange([...itens, itemDeCatalogo(catalogItem, sistema)])
     setCatalogSelecionado('')
   }
 
   function adicionarAvulso() {
     onChange([
       ...itens,
-      { id: novoItemId(), catalogId: null, descricao: 'Item avulso', especificacao: '', quantidade: 1, unidade: 'un', custoUnitario: 0, status: 'incluso' },
+      { id: novoItemId(), catalogId: null, descricao: 'Item avulso', especificacao: '', quantidade: 1, unidade: 'unidades', custoUnitario: 0, status: 'incluso' },
     ])
   }
 
@@ -144,7 +153,7 @@ export function MateriaisStep({ itens, onChange, sistema, catalogo }: MateriaisS
             onChange={(e) => setCatalogSelecionado(e.target.value)}
             options={[
               { value: '', label: 'Selecione um item' },
-              ...catalogo.map((c) => ({ value: c.id, label: `${CATEGORIA_LABELS[c.categoria]} · ${c.marca} ${c.modelo}` })),
+              ...catalogo.map((c) => ({ value: c.id, label: `${CATEGORIA_LABELS[c.categoria]} · ${c.nome}` })),
             ]}
           />
         </div>

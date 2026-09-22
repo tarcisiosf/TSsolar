@@ -5,6 +5,7 @@ import { Card } from '@/components/ui/Card'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { Select } from '@/components/ui/Select'
 import { SkeletonRow } from '@/components/ui/Skeleton'
+import { Switch } from '@/components/ui/Switch'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { formatBRL, formatDateBR } from '@/lib/format'
 import { subscribeCatalog, updateCatalogItem } from '@/lib/data/catalog'
@@ -26,7 +27,7 @@ export function CatalogPage() {
     const termo = busca.trim().toLowerCase()
     return itens.filter((item) => {
       const bateCategoria = categoria === 'todas' || item.categoria === categoria
-      const bateBusca = !termo || `${item.marca} ${item.modelo}`.toLowerCase().includes(termo)
+      const bateBusca = !termo || item.nome.toLowerCase().includes(termo)
       return bateCategoria && bateBusca
     })
   }, [itens, busca, categoria])
@@ -120,13 +121,8 @@ export function CatalogPage() {
           <Card key={item.id} onClick={() => abrirEdicao(item)} className="cursor-pointer">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
-                <p className="truncate text-sm font-bold text-graphite">
-                  {item.marca} {item.modelo}
-                </p>
-                <p className="text-xs text-muted">
-                  {CATEGORIA_LABELS[item.categoria]}
-                  {item.potenciaW ? ` · ${item.potenciaW} W` : ''}
-                </p>
+                <p className="truncate text-sm font-bold text-graphite">{item.nome}</p>
+                <p className="text-xs text-muted">{CATEGORIA_LABELS[item.categoria]}</p>
               </div>
               {!item.ativo && <span className="shrink-0 rounded-pill bg-chip px-2 py-1 text-[11px] font-bold text-muted">Inativo</span>}
             </div>
@@ -141,34 +137,26 @@ export function CatalogPage() {
 }
 
 function CatalogRow({ item, onEdit }: { item: CatalogItem; onEdit: () => void }) {
-  async function toggleAtivo(e: React.MouseEvent) {
-    e.stopPropagation()
+  async function toggleAtivo() {
     await updateCatalogItem(item.id, { ativo: !item.ativo })
   }
 
   return (
     <tr className="cursor-pointer border-b border-line-soft last:border-0 hover:bg-ivory" onClick={onEdit}>
       <td className="px-4 py-3">
-        <p className="font-bold text-graphite">
-          {item.marca} {item.modelo}
-        </p>
-        {item.potenciaW && <p className="text-xs text-muted">{item.potenciaW} W</p>}
+        <p className="font-bold text-graphite">{item.nome}</p>
       </td>
       <td className="px-4 py-3 text-muted">{CATEGORIA_LABELS[item.categoria]}</td>
       <td className="px-4 py-3 tabular-nums font-semibold text-graphite">{formatBRL(item.custoUnitario)}</td>
       <td className="px-4 py-3 text-muted">{item.atualizadoEm ? formatDateBR(item.atualizadoEm.toDate()) : '—'}</td>
-      <td className="px-4 py-3">
-        <button
-          onClick={toggleAtivo}
-          className={`relative h-6 w-11 rounded-pill transition-colors ${item.ativo ? 'bg-success' : 'bg-line'}`}
-          aria-label={item.ativo ? 'Desativar item' : 'Ativar item'}
-          role="switch"
-          aria-checked={item.ativo}
-        >
-          <span
-            className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow-card transition-transform ${item.ativo ? 'translate-x-5' : 'translate-x-0.5'}`}
-          />
-        </button>
+      <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+        <Switch
+          label=""
+          checked={item.ativo}
+          onChange={toggleAtivo}
+          id={`ativo-${item.id}`}
+          ariaLabel={item.ativo ? 'Desativar item' : 'Ativar item'}
+        />
       </td>
       <td className="px-4 py-3 text-right text-xs font-bold text-sun">Editar</td>
     </tr>

@@ -1,12 +1,9 @@
 import { Sparkles } from 'lucide-react'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
-import { calcularRelacaoCcCa, potenciaFinalKwp, sugerirDimensionamento } from '@/lib/calc/dimensionamento'
+import { calcularAreaEstimada, calcularRelacaoCcCa, potenciaFinalKwp, sugerirDimensionamento } from '@/lib/calc/dimensionamento'
 import { formatKwp, formatNumber } from '@/lib/format'
 import type { CatalogItem, ProposalSistema } from '@/types/firestore'
-
-// Área por módulo aproximada (m²) — catálogo não guarda dimensões físicas ainda.
-const AREA_POR_MODULO_M2 = 2.1
 
 interface SistemaStepProps {
   sistema: ProposalSistema
@@ -23,23 +20,24 @@ export function SistemaStep({ sistema, onChange, consumoMedioMensalKwh, produtiv
 
   function recalcularComQtd(qtdModulos: number, moduloId = sistema.moduloId) {
     const modulo = modulos.find((m) => m.id === moduloId)
-    const potenciaKwp = modulo?.potenciaW ? potenciaFinalKwp(qtdModulos, modulo.potenciaW) : sistema.potenciaKwp
+    const potenciaKwp = modulo && modulo.categoria === 'modulo' ? potenciaFinalKwp(qtdModulos, modulo.potenciaWp) : sistema.potenciaKwp
+    const areaM2Modulo = modulo && modulo.categoria === 'modulo' ? modulo.areaM2 : null
     onChange({
       ...sistema,
       moduloId,
       qtdModulos,
       potenciaKwp,
-      areaM2: qtdModulos * AREA_POR_MODULO_M2,
+      areaM2: calcularAreaEstimada(qtdModulos, areaM2Modulo),
     })
   }
 
   function aplicarSugestao() {
-    if (!moduloSelecionado?.potenciaW) return
-    const { qtdModulosSugerido } = sugerirDimensionamento(consumoMedioMensalKwh, produtividadeKwhKwpAno, moduloSelecionado.potenciaW)
+    if (!moduloSelecionado || moduloSelecionado.categoria !== 'modulo' || !moduloSelecionado.potenciaWp) return
+    const { qtdModulosSugerido } = sugerirDimensionamento(consumoMedioMensalKwh, produtividadeKwhKwpAno, moduloSelecionado.potenciaWp)
     recalcularComQtd(qtdModulosSugerido)
   }
 
-  const inversorPotenciaKw = inversorSelecionado?.potenciaW ? inversorSelecionado.potenciaW / 1000 : 0
+  const inversorPotenciaKw = inversorSelecionado && inversorSelecionado.categoria === 'inversor' ? inversorSelecionado.potenciaKw : 0
   const relacao = calcularRelacaoCcCa(sistema.potenciaKwp, inversorPotenciaKw)
 
   return (
@@ -51,17 +49,17 @@ export function SistemaStep({ sistema, onChange, consumoMedioMensalKwh, produtiv
           label="Módulo"
           value={sistema.moduloId ?? ''}
           onChange={(e) => recalcularComQtd(sistema.qtdModulos, e.target.value || null)}
-          options={[{ value: '', label: 'Selecione um módulo' }, ...modulos.map((m) => ({ value: m.id, label: `${m.marca} ${m.modelo} (${m.potenciaW} W)` }))]}
+          options={[{ value: '', label: 'Selecione um módulo' }, ...modulos.map((m) => ({ value: m.id, label: m.nome }))]}
         />
         <Select
           label="Inversor"
           value={sistema.inversorId ?? ''}
           onChange={(e) => onChange({ ...sistema, inversorId: e.target.value || null })}
-          options={[{ value: '', label: 'Selecione um inversor' }, ...inversores.map((i) => ({ value: i.id, label: `${i.marca} ${i.modelo} (${(i.potenciaW ?? 0) / 1000} kW)` }))]}
+          options={[{ value: '', label: 'Selecione um inversor' }, ...inversores.map((i) => ({ value: i.id, label: i.nome }))]}
         />
       </div>
 
-      {moduloSelecionado?.potenciaW && (
+      {moduloSelecionado?.categoria === 'modulo' && moduloSelecionado.potenciaWp > 0 && (
         <button
           type="button"
           onClick={aplicarSugestao}
@@ -85,7 +83,11 @@ export function SistemaStep({ sistema, onChange, consumoMedioMensalKwh, produtiv
         </div>
         <div className="flex flex-col justify-center rounded-field bg-chip px-4 py-2">
           <p className="text-xs font-semibold text-muted">Área estimada</p>
-          <p className="tabular-nums text-base font-extrabold text-graphite">{formatNumber(sistema.areaM2, 1)} m²</p>
+          {sistema.areaM2 != null ? (
+            <p className="tabular-nums text-base font-extrabold text-graphite">{formatNumber(sistema.areaM2, 1)} m²</p>
+          ) : (
+            <p className="text-xs font-semibold text-sun-ink">Informe a área do módulo no catálogo</p>
+          )}
         </div>
       </div>
 

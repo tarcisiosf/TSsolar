@@ -120,7 +120,7 @@ export function ProposalEditorPage() {
         itens: draft.itens,
         servicos: draft.servicos,
         precificacao: draft.precificacao,
-        inversorPotenciaKw: inversorSelecionado?.potenciaW ? inversorSelecionado.potenciaW / 1000 : 0,
+        inversorPotenciaKw: inversorSelecionado && inversorSelecionado.categoria === 'inversor' ? inversorSelecionado.potenciaKw : 0,
         calc,
         anoCalendarioInicial: new Date().getFullYear(),
       })
@@ -171,7 +171,7 @@ export function ProposalEditorPage() {
     if (!id) return
     setGerando(true)
     try {
-      await publicarProposta(id, inversorSelecionado?.potenciaW ? inversorSelecionado.potenciaW / 1000 : 0)
+      await publicarProposta(id, inversorSelecionado && inversorSelecionado.categoria === 'inversor' ? inversorSelecionado.potenciaKw : 0)
       setStep(STEPS.length - 1)
     } catch (e) {
       alert(e instanceof Error ? e.message : 'Não foi possível gerar a proposta.')

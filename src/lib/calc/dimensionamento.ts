@@ -23,6 +23,12 @@ export function potenciaFinalKwp(qtdModulos: number, potenciaModuloW: number): n
   return (qtdModulos * potenciaModuloW) / 1000
 }
 
+/** Área estimada do sistema: quantidade × área do módulo × 1,1 de folga para espaçamento/orientação. Null se o módulo não tem área cadastrada. */
+export function calcularAreaEstimada(qtdModulos: number, areaM2Modulo: number | null): number | null {
+  if (areaM2Modulo === null) return null
+  return qtdModulos * areaM2Modulo * 1.1
+}
+
 export type NivelRelacaoCcCa = 'ok' | 'aviso' | 'alerta'
 
 export interface RelacaoCcCa {

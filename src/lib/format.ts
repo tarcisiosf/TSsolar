@@ -23,6 +23,10 @@ export function formatNumber(valor: number, casasDecimais = 0): string {
   }).format(valor)
 }
 
+export function formatDecimalBR(valor: number, maxCasas = 2): string {
+  return valor.toLocaleString('pt-BR', { maximumFractionDigits: maxCasas })
+}
+
 export function formatKwp(valor: number): string {
   return `${formatNumber(valor, 2)} kWp`
 }
