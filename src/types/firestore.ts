@@ -89,6 +89,7 @@ export interface CatalogItemInversor extends CatalogItemBase {
   fase: Ligacao
   monitoramentoWifi: boolean
   garantiaAnos: number | null
+  mppts: number | null
 }
 
 export interface CatalogItemEstrutura extends CatalogItemBase {

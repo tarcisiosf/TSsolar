@@ -28,6 +28,7 @@ const inversorSchema = z.object({
   fase: z.enum(['mono', 'bi', 'tri']),
   monitoramentoWifi: z.boolean(),
   garantiaAnos: z.number().int().nonnegative().nullable(),
+  mppts: z.number().int().positive().nullable(),
   ...base,
 })
 

@@ -6,7 +6,7 @@ export type CatalogItemInput = DistributiveOmit<CatalogItem, 'id' | 'nome' | 'cr
 
 const PADROES: Record<CategoriaCatalogo, CatalogItemInput> = {
   modulo: { categoria: 'modulo', unidade: 'un', marca: '', potenciaWp: 0, areaM2: null, larguraM: null, tecnologia: null, garantiaProdutoAnos: null, garantiaPerformanceAnos: null, custoUnitario: 0, ativo: true },
-  inversor: { categoria: 'inversor', unidade: 'un', marca: '', tipo: 'string', potenciaKw: 0, fase: 'mono', monitoramentoWifi: false, garantiaAnos: null, custoUnitario: 0, ativo: true },
+  inversor: { categoria: 'inversor', unidade: 'un', marca: '', tipo: 'string', potenciaKw: 0, fase: 'mono', monitoramentoWifi: false, garantiaAnos: null, mppts: null, custoUnitario: 0, ativo: true },
   estrutura: { categoria: 'estrutura', unidade: 'modulo', marca: '', tipoTelhado: 'ceramico', custoUnitario: 0, ativo: true },
   cabo: { categoria: 'cabo', unidade: 'm', tipo: 'cc_solar', bitolaMm2: 6, custoUnitario: 0, ativo: true },
   mc4: { categoria: 'mc4', unidade: 'par', marca: '', custoUnitario: 0, ativo: true },

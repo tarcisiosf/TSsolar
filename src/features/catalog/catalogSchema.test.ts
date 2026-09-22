@@ -39,4 +39,11 @@ describe('validarCatalogItem', () => {
     const erros = validarCatalogItem({ ...defaultCatalogItemInput('modulo'), marca: 'Astroenergy', potenciaWp: 725, custoUnitario: 900, larguraM: -1 })
     expect(erros.larguraM).toBeTruthy()
   })
+
+  it('inversor aceita mppts nulo ou preenchido', () => {
+    const semMppts = validarCatalogItem({ ...defaultCatalogItemInput('inversor'), marca: 'Sofar', potenciaKw: 5, custoUnitario: 100 })
+    expect(semMppts).toEqual({})
+    const comMppts = validarCatalogItem({ ...defaultCatalogItemInput('inversor'), marca: 'Sofar', potenciaKw: 4, mppts: 1, custoUnitario: 100 })
+    expect(comMppts).toEqual({})
+  })
 })
