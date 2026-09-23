@@ -309,10 +309,6 @@ export interface PublicProposal {
   itens: Pick<ProposalItem, 'id' | 'descricao' | 'especificacao' | 'quantidade' | 'unidade' | 'status'>[]
   resultados: PublicProposalResultados
   precoFinal: number
-  parcelas: {
-    cartao: { valor: number; parcelas: number }
-    financiamento: { valor: number; parcelas: number }
-  }
   empresa: PublicProposalEmpresa
   validadeDias: number
   prazoInstalacao: string

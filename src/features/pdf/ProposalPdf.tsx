@@ -1,4 +1,4 @@
-import { Circle, Document, Line, Link, Page, StyleSheet, Svg, Text, View } from '@react-pdf/renderer'
+import { Circle, Document, Image, Line, Link, Page, StyleSheet, Svg, Text, View } from '@react-pdf/renderer'
 import { formatBRL, formatDateBR, formatKwh, formatKwp, formatNumber, formatPercent } from '@/lib/format'
 import type { PublicProposal } from '@/types/firestore'
 import { registrarFontesPdf } from './fonts'
@@ -27,6 +27,7 @@ const styles = StyleSheet.create({
   page: { fontFamily: 'Plus Jakarta Sans', fontSize: 10, color: cores.graphite, backgroundColor: cores.ivory, padding: 32 },
   row: { flexDirection: 'row' },
   spaceBetween: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  brandMark: { width: 20, height: 20, borderRadius: 10 },
   brandName: { fontSize: 13, fontWeight: 800 },
   brandSub: { fontSize: 8, color: cores.muted },
   chip: { borderRadius: 999, paddingVertical: 4, paddingHorizontal: 8, fontSize: 8, fontWeight: 700 },
@@ -79,7 +80,7 @@ export function ProposalPdf({ proposal }: { proposal: PublicProposal }) {
       <Page size="A4" style={styles.page}>
         <View style={styles.spaceBetween}>
           <View style={styles.row}>
-            <SunMark />
+            {proposal.empresa.logoUrl ? <Image src={proposal.empresa.logoUrl} style={styles.brandMark} /> : <SunMark />}
             <View style={{ marginLeft: 8 }}>
               <Text style={styles.brandName}>{proposal.empresa.nome}</Text>
               <Text style={styles.brandSub}>em parceria com {proposal.empresa.parceria.nome}</Text>
@@ -95,7 +96,7 @@ export function ProposalPdf({ proposal }: { proposal: PublicProposal }) {
           </View>
         </View>
 
-        <View style={styles.hero}>
+        <View style={styles.hero} wrap={false}>
           <Text style={[styles.heroText, { fontSize: 9 }]}>Olá, {proposal.clienteNome.split(' ')[0]}</Text>
           <Text style={styles.heroTitle}>
             Sua conta de luz cai de {formatBRL(proposal.resultados.contaAntesMediaMensal, false)} para{' '}
@@ -127,7 +128,7 @@ export function ProposalPdf({ proposal }: { proposal: PublicProposal }) {
         </View>
 
         <View style={styles.row}>
-          <View style={[styles.card, { flex: 1, marginRight: 8 }]}>
+          <View style={[styles.card, { flex: 1, marginRight: 8 }]} wrap={false}>
             <Text style={styles.sectionTitle}>Cenário conservador</Text>
             <Text style={{ fontSize: 14, fontWeight: 800, color: cores.success }}>{formatBRL(proposal.resultados.economia25AnosConservador, false)}</Text>
             <Text style={{ fontSize: 8, color: cores.muted, marginBottom: 4 }}>economia em 25 anos</Text>
@@ -135,7 +136,7 @@ export function ProposalPdf({ proposal }: { proposal: PublicProposal }) {
               Payback: {proposal.resultados.paybackMesesConservador ? `${Math.floor(proposal.resultados.paybackMesesConservador / 12)} anos` : 'fora do horizonte'}
             </Text>
           </View>
-          <View style={[styles.card, { flex: 1 }]}>
+          <View style={[styles.card, { flex: 1 }]} wrap={false}>
             <Text style={styles.sectionTitle}>Cenário otimista</Text>
             <Text style={{ fontSize: 14, fontWeight: 800, color: cores.success }}>{formatBRL(proposal.resultados.economia25AnosOtimista, false)}</Text>
             <Text style={{ fontSize: 8, color: cores.muted, marginBottom: 4 }}>economia em 25 anos</Text>
@@ -148,7 +149,7 @@ export function ProposalPdf({ proposal }: { proposal: PublicProposal }) {
         <View style={styles.card}>
           <Text style={styles.sectionTitle}>Equipamentos</Text>
           {proposal.itens.map((item) => (
-            <View key={item.id} style={styles.itemRow}>
+            <View key={item.id} style={styles.itemRow} wrap={false}>
               <View>
                 <Text style={{ fontWeight: 700 }}>{item.descricao}</Text>
                 <Text style={{ fontSize: 8, color: cores.muted }}>
@@ -161,17 +162,12 @@ export function ProposalPdf({ proposal }: { proposal: PublicProposal }) {
         </View>
 
         <View style={styles.row}>
-          <View style={[styles.card, { flex: 1, marginRight: 8 }]}>
+          <View style={[styles.card, { flex: 1, marginRight: 8 }]} wrap={false}>
             <Text style={styles.sectionTitle}>Investimento</Text>
             <Text style={{ fontSize: 18, fontWeight: 800 }}>{formatBRL(proposal.precoFinal, false)}</Text>
-            <Text style={{ fontSize: 8, color: cores.muted, marginBottom: 8 }}>à vista · {formatNumber(proposal.resultados.precoPorWp, 2)} R$/Wp</Text>
-            <Text style={{ fontSize: 9 }}>Cartão {proposal.parcelas.cartao.parcelas}x de {formatBRL(proposal.parcelas.cartao.valor)}</Text>
-            <Text style={{ fontSize: 9, marginTop: 2 }}>
-              Financiamento {proposal.parcelas.financiamento.parcelas}x de {formatBRL(proposal.parcelas.financiamento.valor)}
-            </Text>
-            <Text style={{ fontSize: 7, color: cores.muted, marginTop: 6 }}>Parcelas simuladas — condições finais dependem do banco ou operadora.</Text>
+            <Text style={{ fontSize: 8, color: cores.muted }}>à vista · {formatNumber(proposal.resultados.precoPorWp, 2)} R$/Wp</Text>
           </View>
-          <View style={[styles.card, { flex: 1 }]}>
+          <View style={[styles.card, { flex: 1 }]} wrap={false}>
             <Text style={styles.sectionTitle}>Incluso e garantias</Text>
             {proposal.servicosInclusos.map((s, i) => (
               <Text key={i} style={{ fontSize: 9, marginBottom: 2 }}>
@@ -183,7 +179,7 @@ export function ProposalPdf({ proposal }: { proposal: PublicProposal }) {
           </View>
         </View>
 
-        <View style={styles.card}>
+        <View style={styles.card} wrap={false}>
           <Text style={styles.sectionTitle}>Não incluso</Text>
           <Text style={{ fontSize: 9 }}>{proposal.exclusoes}</Text>
         </View>

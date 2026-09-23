@@ -10,7 +10,7 @@ export const DEFAULT_COMPANY: CompanySettings = {
   whatsapp: '',
   instagram: '',
   email: '',
-  logoUrl: null,
+  logoUrl: '/logo.png',
   validadeDias: 15,
   prazoInstalacao: 'até 45 dias após a aprovação da Equatorial Goiás',
   garantias: { paineis: '25 anos', inversor: '10 anos', instalacao: '' },

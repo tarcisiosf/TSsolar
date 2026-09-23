@@ -1,13 +1,8 @@
 import type { CompanySettings, PublicProposal, Proposal } from '@/types/firestore'
-import { calcularPMT } from './pagamento'
 
 export interface ToPublicSnapshotParams {
   proposal: Proposal
   company: CompanySettings
-  taxaCartaoMensal: number
-  parcelasCartao: number
-  taxaFinanciamentoMensal: number
-  parcelasFinanciamento: number
 }
 
 /**
@@ -20,7 +15,7 @@ export interface ToPublicSnapshotParams {
  * que falha caso esses campos apareçam no snapshot.
  */
 export function toPublicSnapshot(params: ToPublicSnapshotParams): PublicProposal {
-  const { proposal, company, taxaCartaoMensal, parcelasCartao, taxaFinanciamentoMensal, parcelasFinanciamento } = params
+  const { proposal, company } = params
 
   if (!proposal.resultados) {
     throw new Error('Proposta sem resultados calculados — calcule antes de gerar o snapshot público.')
@@ -68,13 +63,6 @@ export function toPublicSnapshot(params: ToPublicSnapshotParams): PublicProposal
       geracaoMensalKwh: proposal.resultados.geracaoMensalKwh,
     },
     precoFinal,
-    parcelas: {
-      cartao: { valor: calcularPMT(precoFinal, taxaCartaoMensal, parcelasCartao), parcelas: parcelasCartao },
-      financiamento: {
-        valor: calcularPMT(precoFinal, taxaFinanciamentoMensal, parcelasFinanciamento),
-        parcelas: parcelasFinanciamento,
-      },
-    },
     empresa: {
       nome: company.nome,
       parceria: company.parceria,

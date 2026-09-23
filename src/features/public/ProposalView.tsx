@@ -146,25 +146,7 @@ export function ProposalView({ proposal, onBaixarPdf, preview }: ProposalViewPro
             <p className="tabular-nums text-[1.75rem] font-extrabold leading-[1.1] tracking-[-0.03em] text-graphite">
               {formatBRL(proposal.precoFinal, false)}
             </p>
-            <p className="mb-4 text-xs text-muted">à vista · {formatNumber(proposal.resultados.precoPorWp, 2)} R$/Wp</p>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="rounded-field bg-chip p-3">
-                <p className="text-[11px] font-bold uppercase text-muted">Cartão {proposal.parcelas.cartao.parcelas}x</p>
-                <p className="tabular-nums text-base font-extrabold text-graphite">{formatBRL(proposal.parcelas.cartao.valor)}</p>
-              </div>
-              <div className={`rounded-field p-3 ${proposal.entrada.contaAtual && proposal.parcelas.financiamento.valor < proposal.entrada.contaAtual ? 'bg-sun-soft' : 'bg-chip'}`}>
-                <p className={`text-[11px] font-bold uppercase ${proposal.entrada.contaAtual && proposal.parcelas.financiamento.valor < proposal.entrada.contaAtual ? 'text-sun-ink' : 'text-muted'}`}>
-                  Financiamento {proposal.parcelas.financiamento.parcelas}x
-                </p>
-                <p className={`tabular-nums text-base font-extrabold ${proposal.entrada.contaAtual && proposal.parcelas.financiamento.valor < proposal.entrada.contaAtual ? 'text-sun-ink' : 'text-graphite'}`}>
-                  {formatBRL(proposal.parcelas.financiamento.valor)}
-                </p>
-                {proposal.entrada.contaAtual && proposal.parcelas.financiamento.valor < proposal.entrada.contaAtual && (
-                  <p className="mt-1 text-[11px] font-semibold text-sun-ink">Menor que sua conta atual</p>
-                )}
-              </div>
-            </div>
-            <p className="mt-3 text-[11px] text-muted">Parcelas simuladas — condições finais dependem do banco ou operadora.</p>
+            <p className="text-xs text-muted">à vista · {formatNumber(proposal.resultados.precoPorWp, 2)} R$/Wp</p>
           </div>
         </div>
 

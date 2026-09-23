@@ -167,14 +167,7 @@ export async function publicarProposta(id: string, inversorPotenciaKw: number): 
     atualizadoEm: serverTimestamp(),
   })
 
-  const publicSnapshot = toPublicSnapshot({
-    proposal: propostaAtualizada,
-    company,
-    taxaCartaoMensal: calc.taxaCartaoMensal,
-    parcelasCartao: calc.parcelasCartao,
-    taxaFinanciamentoMensal: calc.taxaFinanciamentoMensal,
-    parcelasFinanciamento: calc.parcelasFinanciamento,
-  })
+  const publicSnapshot = toPublicSnapshot({ proposal: propostaAtualizada, company })
 
   await setDoc(doc(publicProposalsCollection, proposal.publicId), { ...publicSnapshot, atualizadoEm: serverTimestamp() })
 

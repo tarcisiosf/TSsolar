@@ -157,14 +157,7 @@ export function ProposalEditorPage() {
     if (!proposal || !draft || !company || !calc || !resultados) return null
     const propostaTemp: Proposal = { ...proposal, ...draft, precificacao: { ...draft.precificacao, precoFinal }, resultados }
     try {
-      return toPublicSnapshot({
-        proposal: propostaTemp,
-        company,
-        taxaCartaoMensal: calc.taxaCartaoMensal,
-        parcelasCartao: calc.parcelasCartao,
-        taxaFinanciamentoMensal: calc.taxaFinanciamentoMensal,
-        parcelasFinanciamento: calc.parcelasFinanciamento,
-      })
+      return toPublicSnapshot({ proposal: propostaTemp, company })
     } catch {
       return null
     }

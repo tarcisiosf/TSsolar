@@ -103,14 +103,7 @@ function collectKeys(value: unknown, keys = new Set<string>()): Set<string> {
 
 describe('toPublicSnapshot — regra de ouro (allowlist)', () => {
   it('nunca inclui campos de custo, margem ou comissão', () => {
-    const snapshot = toPublicSnapshot({
-      proposal: buildProposal(),
-      company: buildCompany(),
-      taxaCartaoMensal: 0.0099,
-      parcelasCartao: 12,
-      taxaFinanciamentoMensal: 0.0149,
-      parcelasFinanciamento: 60,
-    })
+    const snapshot = toPublicSnapshot({ proposal: buildProposal(), company: buildCompany() })
 
     const keys = collectKeys(snapshot)
     for (const forbidden of FORBIDDEN_KEYS) {
@@ -124,19 +117,11 @@ describe('toPublicSnapshot — regra de ouro (allowlist)', () => {
   })
 
   it('mantém os dados que o cliente precisa ver', () => {
-    const snapshot = toPublicSnapshot({
-      proposal: buildProposal(),
-      company: buildCompany(),
-      taxaCartaoMensal: 0.0099,
-      parcelasCartao: 12,
-      taxaFinanciamentoMensal: 0.0149,
-      parcelasFinanciamento: 60,
-    })
+    const snapshot = toPublicSnapshot({ proposal: buildProposal(), company: buildCompany() })
 
     expect(snapshot.numero).toBe('TS-2026-014')
     expect(snapshot.precoFinal).toBe(PRECO_FINAL)
     expect(snapshot.itens[0].descricao).toBe('Módulo 550W')
     expect(snapshot.empresa.parceria.nome).toBe('TechSolar')
-    expect(snapshot.parcelas.cartao.valor).toBeGreaterThan(0)
   })
 })
