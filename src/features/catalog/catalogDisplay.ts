@@ -1,4 +1,4 @@
-import { formatDecimalBR } from '@/lib/format'
+import { formatDecimalBR, plural } from '@/lib/format'
 import type { ApresentacaoCabo, CategoriaCatalogo, CatalogItem, DistributiveOmit, TipoTelhado } from '@/types/firestore'
 import { TIPO_CABO_LABELS, TIPO_INVERSOR_LABELS, TIPO_PECA_ESTRUTURA_LABELS, TIPO_PROTECAO_LABELS, TIPO_TELHADO_LABELS } from './catalogLabels'
 
@@ -89,20 +89,52 @@ export function especificacaoCatalogItem(item: CatalogItem): string {
   }
 }
 
-/** Palavra de unidade usada ao lado da quantidade num item de proposta (ex.: "6 unidades", "30 metros"). */
+/** Palavra de unidade (singular) gravada em `ProposalItem.unidade` ao adicionar o item —
+ * a forma plural correta é resolvida na exibição por `unidadeItemExibicao`, conforme a
+ * quantidade atual do item. */
 export function unidadeDisplay(item: CatalogItem): string {
   switch (item.categoria) {
     case 'cabo':
-      return 'metros'
+      return 'metro'
     case 'mc4':
-      return 'pares'
+      return 'par'
     case 'estrutura':
-      return item.unidade === 'pacote' ? 'pacotes' : item.unidade === 'barra' ? 'barras' : 'unidades'
+      return item.unidade === 'pacote' ? 'pacote' : item.unidade === 'barra' ? 'barra' : 'unidade'
     case 'outro':
-      return item.unidade || 'unidades'
+      return item.unidade || 'unidade'
     default:
-      return 'unidades'
+      return 'unidade'
   }
+}
+
+const PLURAL_UNIDADE: Record<string, string> = {
+  unidade: 'unidades',
+  metro: 'metros',
+  par: 'pares',
+  pacote: 'pacotes',
+  barra: 'barras',
+  módulo: 'módulos',
+}
+
+const SINGULAR_POR_PLURAL_LEGADO: Record<string, string> = {
+  unidades: 'unidade',
+  metros: 'metro',
+  pares: 'par',
+  pacotes: 'pacote',
+  barras: 'barra',
+  módulos: 'módulo',
+}
+
+/** Pluraliza a unidade de um item de proposta conforme a quantidade atual. Cobre tanto
+ * itens novos (unidade já salva no singular) quanto documentos antigos (unidade salva no
+ * plural, de antes desta correção) — nesse caso normaliza para singular antes de decidir.
+ * Texto livre de fora dessas tabelas (categoria "outro") volta como está, sem tentar
+ * pluralizar. */
+export function unidadeItemExibicao(quantidade: number, unidadeArmazenada: string): string {
+  const singular = SINGULAR_POR_PLURAL_LEGADO[unidadeArmazenada] ?? unidadeArmazenada
+  const pluralForm = PLURAL_UNIDADE[singular]
+  if (!pluralForm) return unidadeArmazenada
+  return plural(quantidade, singular, pluralForm)
 }
 
 /** custoPorMetro do cabo — sempre derivado, nunca digitado: preço por metro direto, ou preço do

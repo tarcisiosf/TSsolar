@@ -202,7 +202,7 @@ export function itemVazio(): ProposalItem {
     descricao: '',
     especificacao: '',
     quantidade: 1,
-    unidade: 'unidades',
+    unidade: 'unidade',
     custoUnitario: 0,
     status: 'incluso',
   }
