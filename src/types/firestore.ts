@@ -5,6 +5,9 @@ export type CategoriaCatalogo = 'modulo' | 'inversor' | 'estrutura' | 'cabo' | '
 export type UnidadeCatalogo = 'un' | 'modulo' | 'm' | 'par'
 export type TipoInversor = 'string' | 'micro' | 'hibrido'
 export type TipoTelhado = 'ceramico' | 'fibrocimento' | 'metalico' | 'laje' | 'solo'
+export type TipoImovel = 'residencial' | 'comercial' | 'rural' | 'industrial'
+export type AlturaInstalacao = 'ate_5m' | '5_12m' | 'acima_12m'
+export type OrientacaoTelhado = 'norte' | 'nordeste' | 'noroeste' | 'leste' | 'oeste' | 'sul'
 export type TipoCabo = 'cc_solar' | 'ca'
 export type TipoProtecao = 'disjuntor' | 'dps'
 export type BitolaCaboMm2 = 4 | 6 | 10 | 16
@@ -33,7 +36,14 @@ export interface CompanySettings {
     instalacao: string
   }
   servicosInclusos: string[]
-  exclusoes: string
+  exclusoes: string[]
+  observacaoPreliminar: string
+  garantiaDemaisEquipamentos: string
+  responsavelTecnico: {
+    nome: string
+    titulo: string
+    crea: string
+  }
 }
 
 export interface CalcSettings {
@@ -80,6 +90,7 @@ export interface CatalogItemModulo extends CatalogItemBase {
   tecnologia: TecnologiaModulo | null
   garantiaProdutoAnos: number | null
   garantiaPerformanceAnos: number | null
+  pesoKg: number | null
 }
 
 export interface CatalogItemInversor extends CatalogItemBase {
@@ -185,6 +196,8 @@ export interface Client {
   cidade: string
   endereco: string
   observacoes: string
+  cpfCnpj: string
+  cep: string
   criadoEm: Timestamp
 }
 
@@ -194,8 +207,15 @@ export interface ProposalEntrada {
   contaAtual: number | null
   tarifaKwh: number
   ligacao: Ligacao
-  tipoTelhado: string
+  tipoTelhado: TipoTelhado | ''
   observacoes: string
+  tipoImovel: TipoImovel | ''
+  alturaInstalacao: AlturaInstalacao | ''
+  inclinacaoGraus: number | null
+  orientacaoTelhado: OrientacaoTelhado | ''
+  distribuidora: string
+  unidadeConsumidora: string
+  coordenadas: { lat: number | null; lng: number | null }
 }
 
 export interface ProposalSistema {
@@ -234,6 +254,12 @@ export interface ProposalPrecificacao {
   precoFinal: number
 }
 
+export interface PesoEstimado {
+  totalKg: number
+  kgPorM2: number
+  estimativa: boolean
+}
+
 export interface ProposalResultados {
   custoTotal: number
   lucroEstimado: number
@@ -252,6 +278,7 @@ export interface ProposalResultados {
   contaDepoisMediaMensal: number
   percentualEconomiaMensal: number
   geracaoMensalKwh: number[]
+  pesoEstimado: PesoEstimado
 }
 
 export interface ProposalVersaoHistorico {
@@ -276,6 +303,7 @@ export interface Proposal {
   itens: ProposalItem[]
   servicos: ProposalServicos
   precificacao: ProposalPrecificacao
+  condicoesPagamento: string
   resultados: ProposalResultados | null
   publicId: string
   historicoVersoes: ProposalVersaoHistorico[]
@@ -294,6 +322,18 @@ export interface PublicProposalEmpresa {
   logoUrl: string | null
 }
 
+export interface PublicProposalCliente {
+  cpfCnpj: string
+  telefone: string
+  endereco: string
+  cidade: string
+}
+
+export interface PublicProposalPagamento {
+  cartao: { parcelas: number; valor: number }
+  financiamento: { parcelas: number; valor: number }
+}
+
 export type PublicProposalResultados = Omit<ProposalResultados, 'custoTotal' | 'lucroEstimado' | 'margemResultante'>
 
 export interface PublicProposal {
@@ -302,20 +342,40 @@ export interface PublicProposal {
   versao: number
   status: StatusProposta
   clienteNome: string
+  cliente: PublicProposalCliente
   criadoEm: Timestamp
+  atualizadoEm: Timestamp
   validaAte: Timestamp | null
-  entrada: Pick<ProposalEntrada, 'consumoMedioKwh' | 'consumoMensalKwh' | 'contaAtual' | 'ligacao'>
+  entrada: Pick<
+    ProposalEntrada,
+    | 'consumoMedioKwh'
+    | 'consumoMensalKwh'
+    | 'contaAtual'
+    | 'ligacao'
+    | 'tipoImovel'
+    | 'tipoTelhado'
+    | 'alturaInstalacao'
+    | 'inclinacaoGraus'
+    | 'orientacaoTelhado'
+    | 'distribuidora'
+    | 'unidadeConsumidora'
+    | 'coordenadas'
+  >
   sistema: ProposalSistema
   itens: Pick<ProposalItem, 'id' | 'descricao' | 'especificacao' | 'quantidade' | 'unidade' | 'status'>[]
   resultados: PublicProposalResultados
   precoFinal: number
+  condicoesPagamento: string
+  pagamento: PublicProposalPagamento
   empresa: PublicProposalEmpresa
   validadeDias: number
   prazoInstalacao: string
   garantias: CompanySettings['garantias']
+  garantiaDemaisEquipamentos: string
   servicosInclusos: string[]
-  exclusoes: string
-  atualizadoEm: Timestamp
+  exclusoes: string[]
+  observacaoPreliminar: string
+  responsavelTecnico: CompanySettings['responsavelTecnico']
 }
 
 // Fase 2 — modelado agora, implementado depois
