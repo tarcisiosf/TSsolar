@@ -36,6 +36,7 @@ const MODULO: CatalogItem = {
   id: 'modulo-1', nome: '', criadoEm: TS, atualizadoEm: TS,
   categoria: 'modulo', unidade: 'un', marca: 'Leapton', potenciaWp: 620, areaM2: null,
   larguraM: 1.0, tecnologia: 'bifacial', garantiaProdutoAnos: null, garantiaPerformanceAnos: null,
+  pesoKg: null,
   custoUnitario: 0, ativo: true,
 }
 

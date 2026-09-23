@@ -12,7 +12,7 @@ interface ItemImportado {
 const ITENS: ItemImportado[] = [
   {
     id: 'import-modulo-leapton-620-bifacial',
-    input: { categoria: 'modulo', unidade: 'un', marca: 'Leapton', potenciaWp: 620, areaM2: null, larguraM: null, tecnologia: 'bifacial', garantiaProdutoAnos: null, garantiaPerformanceAnos: null, custoUnitario: 0, ativo: true },
+    input: { categoria: 'modulo', unidade: 'un', marca: 'Leapton', potenciaWp: 620, areaM2: null, larguraM: null, tecnologia: 'bifacial', garantiaProdutoAnos: null, garantiaPerformanceAnos: null, pesoKg: null, custoUnitario: 0, ativo: true },
   },
   {
     id: 'import-inversor-sofar-5kw-mono',

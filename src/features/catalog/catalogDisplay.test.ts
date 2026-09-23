@@ -84,6 +84,7 @@ describe('especificacaoCatalogItem', () => {
       tecnologia: null,
       garantiaProdutoAnos: 12,
       garantiaPerformanceAnos: 30,
+      pesoKg: null,
       custoUnitario: 900,
       ativo: true,
     })

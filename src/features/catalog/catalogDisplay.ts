@@ -5,7 +5,7 @@ import { TIPO_CABO_LABELS, TIPO_INVERSOR_LABELS, TIPO_PECA_ESTRUTURA_LABELS, TIP
 export type CatalogItemInput = DistributiveOmit<CatalogItem, 'id' | 'nome' | 'criadoEm' | 'atualizadoEm' | 'custoPorMetro'>
 
 const PADROES: Record<CategoriaCatalogo, CatalogItemInput> = {
-  modulo: { categoria: 'modulo', unidade: 'un', marca: '', potenciaWp: 0, areaM2: null, larguraM: null, tecnologia: null, garantiaProdutoAnos: null, garantiaPerformanceAnos: null, custoUnitario: 0, ativo: true },
+  modulo: { categoria: 'modulo', unidade: 'un', marca: '', potenciaWp: 0, areaM2: null, larguraM: null, tecnologia: null, garantiaProdutoAnos: null, garantiaPerformanceAnos: null, pesoKg: null, custoUnitario: 0, ativo: true },
   inversor: { categoria: 'inversor', unidade: 'un', marca: '', tipo: 'string', potenciaKw: 0, fase: 'mono', monitoramentoWifi: false, garantiaAnos: null, mppts: null, custoUnitario: 0, ativo: true },
   estrutura: { categoria: 'estrutura', unidade: 'un', marca: '', tipoPeca: 'perfil', tipoTelhado: null, medida: '', formaVenda: 'unidade', pecasPorPacote: null, custoUnitario: 0, ativo: true },
   cabo: { categoria: 'cabo', unidade: 'm', tipo: 'cc_solar', bitolaMm2: 6, cor: 'preto', apresentacao: 'metro', metrosPorRolo: null, custoUnitario: 0, ativo: true },
