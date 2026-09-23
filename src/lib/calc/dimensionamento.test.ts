@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { calcularAreaEstimada, calcularRelacaoCcCa, potenciaFinalKwp, sugerirDimensionamento } from './dimensionamento'
+import { calcularAreaEstimada, calcularPesoEstimado, calcularRelacaoCcCa, potenciaFinalKwp, sugerirDimensionamento } from './dimensionamento'
 
 describe('sugerirDimensionamento', () => {
   it('sugere kWp e quantidade de módulos a partir do consumo anual', () => {
@@ -41,5 +41,22 @@ describe('calcularAreaEstimada', () => {
 
   it('retorna 0 quando não há módulos', () => {
     expect(calcularAreaEstimada(0)).toBe(0)
+  })
+})
+
+describe('calcularPesoEstimado', () => {
+  it('usa o peso do módulo quando cadastrado, com margem de 1,15', () => {
+    const r = calcularPesoEstimado(10, 24, 22)
+    expect(r.totalKg).toBeCloseTo(10 * 22 * 1.15)
+    expect(r.estimativa).toBe(false)
+  })
+  it('cai para 13,5 kg/m² quando o módulo não tem peso cadastrado', () => {
+    const r = calcularPesoEstimado(10, 24, null)
+    expect(r.totalKg).toBeCloseTo(24 * 13.5)
+    expect(r.estimativa).toBe(true)
+  })
+  it('kgPorM2 é 0 quando a área é 0', () => {
+    const r = calcularPesoEstimado(0, 0, null)
+    expect(r.kgPorM2).toBe(0)
   })
 })

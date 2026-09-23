@@ -1,3 +1,5 @@
+import type { PesoEstimado } from '@/types/firestore'
+
 export interface DimensionamentoSugerido {
   kWpSugerido: number
   qtdModulosSugerido: number
@@ -41,4 +43,16 @@ export function calcularRelacaoCcCa(potenciaCcKwp: number, potenciaInversorKw: n
   const relacao = potenciaCcKwp / potenciaInversorKw
   const nivel: NivelRelacaoCcCa = relacao > 1.5 ? 'alerta' : relacao > 1.35 ? 'aviso' : 'ok'
   return { relacao, nivel }
+}
+
+/** Peso estimado da instalação: qtd × peso do módulo cadastrado × 1,15 (margem para
+ * estrutura/cabos), ou 13,5 kg/m² sobre a área quando o módulo não tem peso cadastrado
+ * (marcado como `estimativa: true` nesse caso). */
+export function calcularPesoEstimado(qtdModulos: number, areaM2: number, pesoKgModulo: number | null): PesoEstimado {
+  const totalKg = pesoKgModulo != null ? qtdModulos * pesoKgModulo * 1.15 : areaM2 * 13.5
+  return {
+    totalKg,
+    kgPorM2: areaM2 > 0 ? totalKg / areaM2 : 0,
+    estimativa: pesoKgModulo == null,
+  }
 }
