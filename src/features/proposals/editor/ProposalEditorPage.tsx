@@ -43,6 +43,7 @@ interface EditorDraft {
   itens: ProposalItem[]
   servicos: ProposalServicos
   precificacao: ProposalPrecificacao
+  condicoesPagamento: string
 }
 
 function draftFromProposal(p: Proposal): EditorDraft {
@@ -54,6 +55,7 @@ function draftFromProposal(p: Proposal): EditorDraft {
     itens: p.itens,
     servicos: p.servicos,
     precificacao: p.precificacao,
+    condicoesPagamento: p.condicoesPagamento,
   }
 }
 
@@ -145,6 +147,7 @@ export function ProposalEditorPage() {
         itens: draft.itens,
         servicos: draft.servicos,
         precificacao: { ...draft.precificacao, precoFinal },
+        condicoesPagamento: draft.condicoesPagamento,
       })
         .then(() => setSaveStatus('saved'))
         .catch(() => setSaveStatus('error'))
@@ -237,6 +240,8 @@ export function ProposalEditorPage() {
               precoFinal={precoFinal}
               calc={calc}
               contaAtual={draft.entrada.contaAtual}
+              condicoesPagamento={draft.condicoesPagamento}
+              onChangeCondicoesPagamento={(v) => setDraft({ ...draft, condicoesPagamento: v })}
             />
           )}
           {step === 6 && previewPublico && (

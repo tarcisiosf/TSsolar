@@ -72,6 +72,7 @@ export function criarPropostaVazia(id: string, client: Pick<Client, 'id' | 'nome
     itens: [],
     servicos: SERVICOS_VAZIOS,
     precificacao: { modo: 'margem', margem: 0.25, comissao: 0, precoFinal: 0 },
+    condicoesPagamento: 'A combinar',
     resultados: null,
     publicId: crypto.randomUUID(),
     historicoVersoes: [],

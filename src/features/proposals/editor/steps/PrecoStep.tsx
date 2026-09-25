@@ -13,9 +13,20 @@ interface PrecoStepProps {
   precoFinal: number
   calc: CalcSettings
   contaAtual: number | null
+  condicoesPagamento: string
+  onChangeCondicoesPagamento: (v: string) => void
 }
 
-export function PrecoStep({ precificacao, onChange, resultados, precoFinal, calc, contaAtual }: PrecoStepProps) {
+export function PrecoStep({
+  precificacao,
+  onChange,
+  resultados,
+  precoFinal,
+  calc,
+  contaAtual,
+  condicoesPagamento,
+  onChangeCondicoesPagamento,
+}: PrecoStepProps) {
   function set<K extends keyof ProposalPrecificacao>(key: K, value: ProposalPrecificacao[K]) {
     onChange({ ...precificacao, [key]: value })
   }
@@ -68,6 +79,16 @@ export function PrecoStep({ precificacao, onChange, resultados, precoFinal, calc
         </Card>
       </div>
       <p className="text-xs text-muted">Parcelas simuladas — condições finais dependem do banco ou operadora escolhida.</p>
+
+      <div>
+        <label className="mb-1.5 block text-sm font-semibold text-graphite">Condições de pagamento (texto livre da proposta)</label>
+        <textarea
+          value={condicoesPagamento}
+          onChange={(e) => onChangeCondicoesPagamento(e.target.value)}
+          rows={2}
+          className="w-full rounded-field border border-[#D9D3C7] bg-surface p-3 text-sm text-graphite outline-none focus:ring-2 focus:ring-sun"
+        />
+      </div>
     </div>
   )
 }
