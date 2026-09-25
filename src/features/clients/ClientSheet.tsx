@@ -3,9 +3,15 @@ import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Sheet } from '@/components/ui/Sheet'
 import { createClient, updateClient, type ClientInput } from '@/lib/data/clients'
+import { maskCpfCnpj, isValidCpfCnpj } from '@/lib/cpfCnpj'
+import { onlyDigits } from '@/lib/format'
 import type { Client } from '@/types/firestore'
 
-const VAZIO: ClientInput = { nome: '', telefone: '', email: '', cidade: '', endereco: '', observacoes: '' }
+const VAZIO: ClientInput = { nome: '', telefone: '', email: '', cidade: '', endereco: '', observacoes: '', cpfCnpj: '', cep: '' }
+
+function maskCep(value: string): string {
+  return onlyDigits(value).slice(0, 8).replace(/(\d{5})(\d)/, '$1-$2')
+}
 
 export function ClientSheet({
   open,
@@ -79,6 +85,18 @@ export function ClientSheet({
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Input label="Cidade" value={form.cidade} onChange={(e) => set('cidade', e.target.value)} />
           <Input label="Endereço" value={form.endereco} onChange={(e) => set('endereco', e.target.value)} />
+        </div>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div>
+            <Input
+              label="CPF/CNPJ"
+              hint="Opcional"
+              value={form.cpfCnpj}
+              onChange={(e) => set('cpfCnpj', maskCpfCnpj(e.target.value))}
+            />
+            {form.cpfCnpj && !isValidCpfCnpj(form.cpfCnpj) && <p className="mt-1 text-xs font-semibold text-danger">CPF/CNPJ inválido — confira os números.</p>}
+          </div>
+          <Input label="CEP" hint="Opcional" value={form.cep} onChange={(e) => set('cep', maskCep(e.target.value))} placeholder="00000-000" />
         </div>
         <div>
           <label className="mb-1.5 block text-sm font-semibold text-graphite">Observações</label>
