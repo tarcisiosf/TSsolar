@@ -60,6 +60,13 @@ export function criarPropostaVazia(id: string, client: Pick<Client, 'id' | 'nome
       ligacao: 'mono',
       tipoTelhado: '',
       observacoes: '',
+      tipoImovel: '',
+      alturaInstalacao: '',
+      inclinacaoGraus: null,
+      orientacaoTelhado: '',
+      distribuidora: 'Equatorial Goiás',
+      unidadeConsumidora: '',
+      coordenadas: { lat: null, lng: null },
     },
     sistema: { potenciaKwp: 0, qtdModulos: 0, moduloId: null, inversorId: null, areaM2: null },
     itens: [],
@@ -71,10 +78,26 @@ export function criarPropostaVazia(id: string, client: Pick<Client, 'id' | 'nome
   }
 }
 
+const ENTRADA_VAZIA_NOVOS_CAMPOS = {
+  tipoImovel: '' as const,
+  alturaInstalacao: '' as const,
+  inclinacaoGraus: null,
+  orientacaoTelhado: '' as const,
+  distribuidora: 'Equatorial Goiás',
+  unidadeConsumidora: '',
+  coordenadas: { lat: null, lng: null },
+}
+
 /** Propostas salvas antes do campo `materiais` existir não o têm em `servicos` — preenche com o
- * padrão (0) ao ler, sem tocar no Firestore, para não gerar NaN nos cálculos de custo/margem. */
+ * padrão (0) ao ler, sem tocar no Firestore, para não gerar NaN nos cálculos de custo/margem.
+ * O mesmo vale para os campos de instalação de `entrada`, adicionados depois. */
 function normalizarProposal(raw: Proposal): Proposal {
-  return { ...raw, servicos: { ...SERVICOS_VAZIOS, ...raw.servicos } }
+  return {
+    ...raw,
+    servicos: { ...SERVICOS_VAZIOS, ...raw.servicos },
+    entrada: { ...ENTRADA_VAZIA_NOVOS_CAMPOS, ...raw.entrada },
+    condicoesPagamento: raw.condicoesPagamento ?? 'A combinar',
+  }
 }
 
 export async function createProposal(proposal: Proposal): Promise<void> {

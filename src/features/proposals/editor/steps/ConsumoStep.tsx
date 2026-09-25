@@ -2,8 +2,11 @@ import { useState } from 'react'
 import { Input } from '@/components/ui/Input'
 import { MoneyInput } from '@/components/ui/MoneyInput'
 import { Segmented } from '@/components/ui/Segmented'
+import { Select } from '@/components/ui/Select'
+import { ChevronDown } from 'lucide-react'
 import { sugerirTarifa } from '@/lib/calc/consumo'
-import type { Ligacao, ProposalEntrada } from '@/types/firestore'
+import { TIPO_TELHADO_LABELS } from '@/features/catalog/catalogLabels'
+import type { AlturaInstalacao, Ligacao, OrientacaoTelhado, ProposalEntrada, TipoImovel } from '@/types/firestore'
 
 const MESES = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']
 
@@ -107,7 +110,14 @@ export function ConsumoStep({ entrada, onChange }: { entrada: ProposalEntrada; o
         ]}
       />
 
-      <Input label="Tipo de telhado" value={entrada.tipoTelhado} onChange={(e) => set('tipoTelhado', e.target.value)} placeholder="Cerâmico, metálico, laje…" />
+      <Select
+        label="Tipo de telhado"
+        value={entrada.tipoTelhado}
+        onChange={(e) => set('tipoTelhado', e.target.value as ProposalEntrada['tipoTelhado'])}
+        options={[{ value: '', label: 'Não informado' }, ...Object.entries(TIPO_TELHADO_LABELS).map(([value, label]) => ({ value, label }))]}
+      />
+
+      <DadosInstalacaoSection entrada={entrada} set={set} />
 
       <div>
         <label className="mb-1.5 block text-sm font-semibold text-graphite">Observações</label>
@@ -118,6 +128,103 @@ export function ConsumoStep({ entrada, onChange }: { entrada: ProposalEntrada; o
           className="w-full rounded-field border border-[#D9D3C7] bg-surface p-3 text-sm text-graphite outline-none focus:ring-2 focus:ring-sun"
         />
       </div>
+    </div>
+  )
+}
+
+const TIPO_IMOVEL_LABELS: Record<TipoImovel, string> = {
+  residencial: 'Residencial',
+  comercial: 'Comercial',
+  rural: 'Rural',
+  industrial: 'Industrial',
+}
+
+const ALTURA_LABELS: Record<AlturaInstalacao, string> = {
+  ate_5m: 'Até 5 m',
+  '5_12m': '5 a 12 m',
+  acima_12m: 'Acima de 12 m',
+}
+
+const ORIENTACAO_LABELS: Record<OrientacaoTelhado, string> = {
+  norte: 'Norte',
+  nordeste: 'Nordeste',
+  noroeste: 'Noroeste',
+  leste: 'Leste',
+  oeste: 'Oeste',
+  sul: 'Sul',
+}
+
+function DadosInstalacaoSection({
+  entrada,
+  set,
+}: {
+  entrada: ProposalEntrada
+  set: <K extends keyof ProposalEntrada>(key: K, value: ProposalEntrada[K]) => void
+}) {
+  const [aberta, setAberta] = useState(false)
+
+  return (
+    <div className="rounded-card border border-line-soft">
+      <button
+        type="button"
+        onClick={() => setAberta((v) => !v)}
+        className="flex w-full items-center justify-between px-4 py-3 text-left text-sm font-bold text-graphite"
+      >
+        Dados da instalação
+        <ChevronDown className={`h-4 w-4 text-muted transition-transform ${aberta ? 'rotate-180' : ''}`} aria-hidden />
+      </button>
+      {aberta && (
+        <div className="flex flex-col gap-4 border-t border-line-soft p-4">
+          <p className="text-xs text-muted">Tudo opcional — ajuda a compor a ficha técnica da proposta, mas nada aqui bloqueia salvar.</p>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <Select
+              label="Tipo de imóvel"
+              value={entrada.tipoImovel}
+              onChange={(e) => set('tipoImovel', e.target.value as ProposalEntrada['tipoImovel'])}
+              options={[{ value: '', label: 'Não informado' }, ...Object.entries(TIPO_IMOVEL_LABELS).map(([value, label]) => ({ value, label }))]}
+            />
+            <Select
+              label="Altura da instalação"
+              value={entrada.alturaInstalacao}
+              onChange={(e) => set('alturaInstalacao', e.target.value as ProposalEntrada['alturaInstalacao'])}
+              options={[{ value: '', label: 'Não informado' }, ...Object.entries(ALTURA_LABELS).map(([value, label]) => ({ value, label }))]}
+            />
+          </div>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <Input
+              label="Inclinação"
+              type="number"
+              suffix="°"
+              value={entrada.inclinacaoGraus ?? ''}
+              onChange={(e) => set('inclinacaoGraus', e.target.value === '' ? null : Number(e.target.value))}
+            />
+            <Select
+              label="Orientação do telhado"
+              value={entrada.orientacaoTelhado}
+              onChange={(e) => set('orientacaoTelhado', e.target.value as ProposalEntrada['orientacaoTelhado'])}
+              options={[{ value: '', label: 'Não informado' }, ...Object.entries(ORIENTACAO_LABELS).map(([value, label]) => ({ value, label }))]}
+            />
+          </div>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <Input label="Distribuidora" value={entrada.distribuidora} onChange={(e) => set('distribuidora', e.target.value)} />
+            <Input label="Unidade consumidora" value={entrada.unidadeConsumidora} onChange={(e) => set('unidadeConsumidora', e.target.value)} />
+          </div>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <Input
+              label="Latitude"
+              type="number"
+              value={entrada.coordenadas.lat ?? ''}
+              onChange={(e) => set('coordenadas', { ...entrada.coordenadas, lat: e.target.value === '' ? null : Number(e.target.value) })}
+            />
+            <Input
+              label="Longitude"
+              type="number"
+              value={entrada.coordenadas.lng ?? ''}
+              onChange={(e) => set('coordenadas', { ...entrada.coordenadas, lng: e.target.value === '' ? null : Number(e.target.value) })}
+            />
+          </div>
+        </div>
+      )}
     </div>
   )
 }
