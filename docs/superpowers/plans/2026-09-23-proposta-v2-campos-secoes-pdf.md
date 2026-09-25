@@ -889,6 +889,9 @@ git commit -m "fix: pluralizacao correta da unidade dos itens (1 unidade, nao 1 
 - Modify: `src/features/catalog/catalogDisplay.ts` (`PADROES.modulo`)
 - Modify: `src/features/catalog/CatalogItemSheet.tsx`
 - Modify: `src/features/catalog/catalogSchema.test.ts`
+- Modify: `src/lib/data/catalogImport.ts`
+- Modify: `src/features/proposals/quantidadeSugerida.test.ts` (fixture literal)
+- Modify: `src/features/catalog/catalogDisplay.test.ts` (pre-existing fixture at the `especificacaoCatalogItem` describe block, unrelated to Task 5's additions there)
 
 **Interfaces:**
 - Consumes: `CatalogItemModulo.pesoKg` (Tarefa 2).
@@ -931,6 +934,32 @@ Em `src/features/catalog/CatalogItemSheet.tsx`, dentro do bloco `{form.categoria
 
 (Só a última linha é nova — as anteriores continuam como estão, servem de âncora.)
 
+- [ ] **Step 3b: `catalogImport.ts` — item de módulo do import do distribuidor**
+
+Em `src/lib/data/catalogImport.ts`, o item `import-modulo-leapton-620-bifacial` constrói um `CatalogItemModulo` inteiro por objeto literal — sem `pesoKg` ele não compila mais. Adicionar `pesoKg: null` ao objeto (o módulo Leapton 620 não tem peso conhecido neste catálogo de exemplo, então `null` é o valor correto, não um placeholder):
+
+```ts
+    input: { categoria: 'modulo', unidade: 'un', marca: 'Leapton', potenciaWp: 620, areaM2: null, larguraM: null, tecnologia: 'bifacial', garantiaProdutoAnos: null, garantiaPerformanceAnos: null, pesoKg: null, custoUnitario: 0, ativo: true },
+```
+
+- [ ] **Step 3c: `quantidadeSugerida.test.ts` e `catalogDisplay.test.ts` — fixtures de módulo que quebraram**
+
+Dois arquivos de teste fora deste inventário original também constroem um `CatalogItemModulo` por objeto literal completo e vão parar de compilar sem `pesoKg` (achado durante a execução deste plano, não estava no spec original — mesma causa-raiz do Step 3b).
+
+Em `src/features/proposals/quantidadeSugerida.test.ts`, a constante `MODULO` (por volta da linha 35-40):
+
+```ts
+const MODULO: CatalogItem = {
+  id: 'modulo-1', nome: '', criadoEm: TS, atualizadoEm: TS,
+  categoria: 'modulo', unidade: 'un', marca: 'Leapton', potenciaWp: 620, areaM2: null,
+  larguraM: 1.0, tecnologia: 'bifacial', garantiaProdutoAnos: null, garantiaPerformanceAnos: null,
+  pesoKg: null,
+  custoUnitario: 0, ativo: true,
+}
+```
+
+Em `src/features/catalog/catalogDisplay.test.ts`, dentro do describe `especificacaoCatalogItem`, o fixture `comBase({ categoria: 'modulo', ... })` (por volta da linha 77-85) — adicionar `pesoKg: null,` à lista de campos do objeto, no mesmo estilo dos demais campos `null` já presentes (`areaM2: null, larguraM: null, tecnologia: null, ...`).
+
 - [ ] **Step 4: Teste do schema**
 
 Em `src/features/catalog/catalogSchema.test.ts`, no bloco de testes de `moduloSchema`/`catalogItemInputSchema` para módulo, adicionar um caso cobrindo `pesoKg: null` (válido) e `pesoKg: 22.5` (válido) seguindo o padrão dos testes vizinhos já existentes para `areaM2`/`larguraM`.
@@ -942,7 +971,7 @@ Expected: passam.
 - [ ] **Step 6: Commit**
 
 ```bash
-git add src/features/catalog/catalogSchema.ts src/features/catalog/catalogDisplay.ts src/features/catalog/CatalogItemSheet.tsx src/features/catalog/catalogSchema.test.ts
+git add src/features/catalog/catalogSchema.ts src/features/catalog/catalogDisplay.ts src/features/catalog/CatalogItemSheet.tsx src/features/catalog/catalogSchema.test.ts src/lib/data/catalogImport.ts src/features/proposals/quantidadeSugerida.test.ts src/features/catalog/catalogDisplay.test.ts
 git commit -m "feat: campo opcional de peso do modulo no catalogo"
 ```
 
