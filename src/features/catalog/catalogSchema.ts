@@ -16,6 +16,7 @@ const moduloSchema = z.object({
   tecnologia: z.enum(['monofacial', 'bifacial']).nullable(),
   garantiaProdutoAnos: z.number().int().nonnegative().nullable(),
   garantiaPerformanceAnos: z.number().int().nonnegative().nullable(),
+  pesoKg: z.number().positive('Informe um peso maior que zero').nullable(),
   ...base,
 })
 

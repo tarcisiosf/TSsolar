@@ -131,6 +131,7 @@ export function CatalogItemSheet({ open, onClose, item }: { open: boolean; onClo
                 options={[{ value: '', label: 'Não informado' }, ...Object.entries(TECNOLOGIA_MODULO_LABELS).map(([value, label]) => ({ value, label }))]}
               />
             </div>
+            <DecimalInput label="Peso do módulo (kg)" suffix="kg" hint="Opcional — usado para estimar o peso da instalação no telhado" value={form.pesoKg} onChange={(v) => set('pesoKg', v)} error={erros.pesoKg} />
           </>
         )}
 

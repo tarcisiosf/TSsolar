@@ -5,7 +5,7 @@ import { Select } from '@/components/ui/Select'
 import { novoItemId } from '@/lib/data/proposals'
 import type { CalcSettings, CatalogItem, Kit, ProposalItem, ProposalSistema, StatusItem } from '@/types/firestore'
 import { CATEGORIA_LABELS } from '@/features/catalog/catalogLabels'
-import { especificacaoCatalogItem, unidadeDisplay } from '@/features/catalog/catalogDisplay'
+import { especificacaoCatalogItem, unidadeDisplay, unidadeItemExibicao } from '@/features/catalog/catalogDisplay'
 import { quantidadeSugerida } from '../../quantidadeSugerida'
 
 interface MateriaisStepProps {
@@ -104,7 +104,7 @@ export function MateriaisStep({ itens, onChange, sistema, catalogo, kits, calc }
   function adicionarAvulso() {
     onChange([
       ...itens,
-      { id: novoItemId(), catalogId: null, descricao: 'Item avulso', especificacao: '', quantidade: 1, unidade: 'unidades', custoUnitario: 0, status: 'incluso' },
+      { id: novoItemId(), catalogId: null, descricao: 'Item avulso', especificacao: '', quantidade: 1, unidade: 'unidade', custoUnitario: 0, status: 'incluso' },
     ])
   }
 
@@ -139,7 +139,7 @@ export function MateriaisStep({ itens, onChange, sistema, catalogo, kits, calc }
             </div>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div>
-                <label className="mb-1 block text-xs font-semibold text-muted">Quantidade ({item.unidade})</label>
+                <label className="mb-1 block text-xs font-semibold text-muted">Quantidade ({unidadeItemExibicao(item.quantidade, item.unidade)})</label>
                 <input
                   type="number"
                   value={item.quantidade}

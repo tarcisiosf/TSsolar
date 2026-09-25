@@ -2,7 +2,9 @@ import { AlertTriangle, Download, MessageCircle } from 'lucide-react'
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { BrandLogo } from '@/components/ui/SunLogo'
 import { StatusItemChip } from '@/components/ui/Chip'
-import { formatBRL, formatDateBR, formatKwh, formatKwp, formatNumber, formatPercent } from '@/lib/format'
+import { formatBRL, formatDataPorExtenso, formatDateBR, formatKwh, formatKwp, formatNumber, formatPayback, formatPercent } from '@/lib/format'
+import { unidadeItemExibicao } from '@/features/catalog/catalogDisplay'
+import { ALTURA_LABELS, ORIENTACAO_LABELS, TIPO_IMOVEL_LABELS, TIPO_TELHADO_LABELS } from '@/features/catalog/catalogLabels'
 import type { PublicProposal } from '@/types/firestore'
 
 const MESES = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']
@@ -47,6 +49,8 @@ export function ProposalView({ proposal, onBaixarPdf, preview }: ProposalViewPro
           </div>
         </div>
 
+        <ClienteHeaderInfo proposal={proposal} />
+
         {preview && (
           <div className="mb-6 rounded-field bg-info-soft px-4 py-2 text-xs font-bold text-info">
             Prévia — é assim que o cliente vai ver a proposta.
@@ -83,7 +87,10 @@ export function ProposalView({ proposal, onBaixarPdf, preview }: ProposalViewPro
             <HeroStat label="Módulos" value={String(proposal.sistema.qtdModulos)} />
             <HeroStat label="Área estimada" value={proposal.sistema.areaM2 != null ? `${formatNumber(proposal.sistema.areaM2, 1)} m²` : '—'} />
           </div>
+          <p className="mt-4 text-[11px] text-muted-dark">Mesmo com o sistema, permanece a cobrança da taxa mínima de disponibilidade da rede.</p>
         </section>
+
+        <FichaTecnicaCard proposal={proposal} />
 
         <div className="mb-8 grid grid-cols-1 gap-6 md:grid-cols-3">
           {/* 4. Gráfico */}
@@ -132,7 +139,7 @@ export function ProposalView({ proposal, onBaixarPdf, preview }: ProposalViewPro
                   <div className="min-w-0">
                     <p className="truncate text-sm font-semibold text-graphite">{item.descricao}</p>
                     <p className="truncate text-xs text-muted">
-                      {item.quantidade} {item.unidade} {item.especificacao && `· ${item.especificacao}`}
+                      {item.quantidade} {unidadeItemExibicao(item.quantidade, item.unidade)} {item.especificacao && `· ${item.especificacao}`}
                     </p>
                   </div>
                   <StatusItemChip status={item.status} />
@@ -150,6 +157,8 @@ export function ProposalView({ proposal, onBaixarPdf, preview }: ProposalViewPro
           </div>
         </div>
 
+        <CondicoesPagamentoCard proposal={proposal} />
+
         {/* 8. Incluso, garantias, prazo, exclusões */}
         <div className="mb-8 grid grid-cols-1 gap-6 md:grid-cols-3">
           <InfoCard titulo="O que está incluso">
@@ -165,10 +174,18 @@ export function ProposalView({ proposal, onBaixarPdf, preview }: ProposalViewPro
             <p className="text-sm text-graphite">Painéis: {proposal.garantias.paineis}</p>
             <p className="text-sm text-graphite">Inversor: {proposal.garantias.inversor}</p>
             {proposal.garantias.instalacao && <p className="text-sm text-graphite">Instalação: {proposal.garantias.instalacao}</p>}
+            <p className="text-sm text-graphite">Demais equipamentos e serviços: {proposal.garantiaDemaisEquipamentos}</p>
             <p className="mt-3 text-sm text-graphite">Prazo: {proposal.prazoInstalacao}</p>
           </InfoCard>
           <InfoCard titulo="Não incluso">
-            <p className="text-sm text-graphite">{proposal.exclusoes}</p>
+            <ul className="flex flex-col gap-1.5">
+              {proposal.exclusoes.map((e, i) => (
+                <li key={i} className="text-sm text-graphite">
+                  · {e}
+                </li>
+              ))}
+            </ul>
+            {proposal.observacaoPreliminar && <p className="mt-3 text-xs text-muted">{proposal.observacaoPreliminar}</p>}
           </InfoCard>
         </div>
 
@@ -197,6 +214,8 @@ export function ProposalView({ proposal, onBaixarPdf, preview }: ProposalViewPro
           </div>
         )}
 
+        <FechamentoDocumento proposal={proposal} />
+
         {/* 10. Rodapé */}
         <footer className="border-t border-line py-6 text-center text-xs text-muted">
           <p>
@@ -224,9 +243,7 @@ function CenarioCard({ titulo, economia25, paybackMeses }: { titulo: string; eco
       <p className="text-xs font-bold uppercase tracking-wide text-muted">{titulo}</p>
       <p className="tabular-nums mt-1 text-lg font-extrabold text-success">{formatBRL(economia25, false)}</p>
       <p className="text-xs text-muted">economia em 25 anos</p>
-      <p className="mt-2 text-sm font-semibold text-graphite">
-        Payback: {paybackMeses ? `${Math.floor(paybackMeses / 12)} anos e ${paybackMeses % 12} meses` : 'fora do horizonte de 25 anos'}
-      </p>
+      <p className="mt-2 text-sm font-semibold text-graphite">Payback: {formatPayback(paybackMeses)}</p>
     </div>
   )
 }
@@ -236,6 +253,102 @@ function InfoCard({ titulo, children }: { titulo: string; children: React.ReactN
     <div className="rounded-card bg-surface p-5 shadow-card">
       <h3 className="mb-3 text-sm font-bold uppercase tracking-wide text-muted">{titulo}</h3>
       {children}
+    </div>
+  )
+}
+
+function ClienteHeaderInfo({ proposal }: { proposal: PublicProposal }) {
+  const linhas = [
+    proposal.clienteNome,
+    proposal.cliente.cpfCnpj,
+    proposal.cliente.telefone,
+    proposal.cliente.endereco,
+    [proposal.cliente.cidade, proposal.entrada.unidadeConsumidora ? `UC ${proposal.entrada.unidadeConsumidora}` : ''].filter(Boolean).join(' · '),
+  ].filter(Boolean)
+
+  if (linhas.length === 0) return null
+
+  return (
+    <p className="mb-6 text-xs text-muted">{linhas.join(' · ')}</p>
+  )
+}
+
+function FichaTecnicaCard({ proposal }: { proposal: PublicProposal }) {
+  const { entrada, sistema, resultados } = proposal
+  const campos: { label: string; valor: string }[] = []
+
+  if (entrada.tipoImovel) campos.push({ label: 'Tipo de imóvel', valor: TIPO_IMOVEL_LABELS[entrada.tipoImovel] ?? entrada.tipoImovel })
+  if (entrada.tipoTelhado) campos.push({ label: 'Tipo de telhado', valor: TIPO_TELHADO_LABELS[entrada.tipoTelhado] ?? entrada.tipoTelhado })
+  if (entrada.alturaInstalacao) campos.push({ label: 'Altura', valor: ALTURA_LABELS[entrada.alturaInstalacao] ?? entrada.alturaInstalacao })
+  if (entrada.inclinacaoGraus != null) campos.push({ label: 'Inclinação', valor: `${entrada.inclinacaoGraus}°` })
+  if (entrada.orientacaoTelhado) campos.push({ label: 'Orientação', valor: ORIENTACAO_LABELS[entrada.orientacaoTelhado] ?? entrada.orientacaoTelhado })
+  if (entrada.distribuidora) campos.push({ label: 'Distribuidora', valor: entrada.distribuidora })
+  if (entrada.unidadeConsumidora) campos.push({ label: 'Unidade consumidora', valor: entrada.unidadeConsumidora })
+  if (entrada.coordenadas.lat != null && entrada.coordenadas.lng != null) campos.push({ label: 'Coordenadas', valor: `${entrada.coordenadas.lat}, ${entrada.coordenadas.lng}` })
+  if (sistema.areaM2 != null) campos.push({ label: 'Área necessária', valor: `${formatNumber(sistema.areaM2, 1)} m²` })
+  if (resultados.pesoEstimado.totalKg > 0) {
+    campos.push({
+      label: 'Peso estimado',
+      valor: `${formatNumber(resultados.pesoEstimado.totalKg, 0)} kg (${formatNumber(resultados.pesoEstimado.kgPorM2, 1)} kg/m²)${resultados.pesoEstimado.estimativa ? ' — estimativa' : ''}`,
+    })
+  }
+
+  if (campos.length === 0) return null
+
+  return (
+    <section className="mb-8 rounded-card bg-surface p-5 shadow-card">
+      <h2 className="mb-4 text-base font-bold text-graphite">Ficha técnica da instalação</h2>
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        {campos.map((c) => (
+          <div key={c.label}>
+            <p className="text-[11px] font-semibold uppercase tracking-wide text-muted">{c.label}</p>
+            <p className="text-sm font-semibold text-graphite">{c.valor}</p>
+          </div>
+        ))}
+      </div>
+    </section>
+  )
+}
+
+function CondicoesPagamentoCard({ proposal }: { proposal: PublicProposal }) {
+  return (
+    <section className="mb-8 rounded-card bg-surface p-5 shadow-card">
+      <h2 className="mb-4 text-base font-bold text-graphite">Condições de pagamento</h2>
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <div className="rounded-field bg-chip p-3">
+          <p className="text-[11px] font-bold uppercase text-muted">À vista</p>
+          <p className="tabular-nums text-lg font-extrabold text-graphite">{formatBRL(proposal.precoFinal, false)}</p>
+        </div>
+        <div className="rounded-field bg-chip p-3">
+          <p className="text-[11px] font-bold uppercase text-muted">Cartão {proposal.pagamento.cartao.parcelas}x</p>
+          <p className="tabular-nums text-lg font-extrabold text-graphite">{formatBRL(proposal.pagamento.cartao.valor)}</p>
+        </div>
+        <div className="rounded-field bg-chip p-3">
+          <p className="text-[11px] font-bold uppercase text-muted">Financiamento {proposal.pagamento.financiamento.parcelas}x</p>
+          <p className="tabular-nums text-lg font-extrabold text-graphite">{formatBRL(proposal.pagamento.financiamento.valor)}</p>
+        </div>
+      </div>
+      {proposal.condicoesPagamento && <p className="mt-3 text-xs text-muted">{proposal.condicoesPagamento}</p>}
+    </section>
+  )
+}
+
+function FechamentoDocumento({ proposal }: { proposal: PublicProposal }) {
+  const cidade = proposal.empresa.cidade.split(',')[0].trim()
+  const { nome, titulo, crea } = proposal.responsavelTecnico
+  return (
+    <div className="mb-8 border-t border-line pt-6">
+      <p className="text-sm text-graphite">
+        {cidade}, {formatDataPorExtenso(proposal.atualizadoEm.toDate())}
+      </p>
+      {nome && (
+        <div className="mt-6">
+          <p className="text-sm font-semibold text-graphite">{nome}</p>
+          <p className="text-xs text-muted">
+            {[titulo, crea ? `CREA ${crea}` : ''].filter(Boolean).join(' · ')}
+          </p>
+        </div>
+      )}
     </div>
   )
 }

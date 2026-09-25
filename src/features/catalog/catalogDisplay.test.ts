@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { Timestamp } from 'firebase/firestore'
 import type { CatalogItem } from '@/types/firestore'
-import { defaultCatalogItemInput, especificacaoCatalogItem, gerarNomeCatalogItem, unidadeDisplay, calcularCustoPorMetro, normalizarCatalogItem } from './catalogDisplay'
+import { defaultCatalogItemInput, especificacaoCatalogItem, gerarNomeCatalogItem, unidadeDisplay, unidadeItemExibicao, calcularCustoPorMetro, normalizarCatalogItem } from './catalogDisplay'
 
 const TS = {} as Timestamp
 
@@ -84,6 +84,7 @@ describe('especificacaoCatalogItem', () => {
       tecnologia: null,
       garantiaProdutoAnos: 12,
       garantiaPerformanceAnos: 30,
+      pesoKg: null,
       custoUnitario: 900,
       ativo: true,
     })
@@ -124,14 +125,14 @@ describe('especificacaoCatalogItem', () => {
 })
 
 describe('unidadeDisplay', () => {
-  it('cabo é medido em metros', () => {
+  it('cabo é medido em metro', () => {
     const item: CatalogItem = comBase({ categoria: 'cabo', unidade: 'm', tipo: 'ca', bitolaMm2: 4, cor: 'preto', apresentacao: 'metro', metrosPorRolo: null, custoPorMetro: 3, custoUnitario: 3, ativo: true })
-    expect(unidadeDisplay(item)).toBe('metros')
+    expect(unidadeDisplay(item)).toBe('metro')
   })
 
-  it('mc4 é medido em pares', () => {
+  it('mc4 é medido em par', () => {
     const item: CatalogItem = comBase({ categoria: 'mc4', unidade: 'par', marca: '', custoUnitario: 10, ativo: true })
-    expect(unidadeDisplay(item)).toBe('pares')
+    expect(unidadeDisplay(item)).toBe('par')
   })
 
   it("'outro' usa a unidade livre cadastrada", () => {
@@ -141,12 +142,32 @@ describe('unidadeDisplay', () => {
 
   it('componente de estrutura vendido em barra', () => {
     const item: CatalogItem = comBase({ categoria: 'estrutura', unidade: 'barra', marca: '', tipoPeca: 'perfil', tipoTelhado: null, medida: '2,4 m', formaVenda: 'barra', pecasPorPacote: null, custoUnitario: 30, ativo: true })
-    expect(unidadeDisplay(item)).toBe('barras')
+    expect(unidadeDisplay(item)).toBe('barra')
   })
 
   it('componente de estrutura vendido em pacote', () => {
     const item: CatalogItem = comBase({ categoria: 'estrutura', unidade: 'pacote', marca: '', tipoPeca: 'grampo_terminal', tipoTelhado: null, medida: '', formaVenda: 'pacote', pecasPorPacote: 4, custoUnitario: 8, ativo: true })
-    expect(unidadeDisplay(item)).toBe('pacotes')
+    expect(unidadeDisplay(item)).toBe('pacote')
+  })
+})
+
+describe('unidadeItemExibicao', () => {
+  it('singular quando quantidade é 1', () => {
+    expect(unidadeItemExibicao(1, 'unidade')).toBe('unidade')
+    expect(unidadeItemExibicao(1, 'par')).toBe('par')
+  })
+  it('plural quando quantidade é diferente de 1', () => {
+    expect(unidadeItemExibicao(6, 'unidade')).toBe('unidades')
+    expect(unidadeItemExibicao(2, 'par')).toBe('pares')
+    expect(unidadeItemExibicao(0, 'metro')).toBe('metros')
+  })
+  it('normaliza documentos antigos salvos já no plural', () => {
+    expect(unidadeItemExibicao(1, 'unidades')).toBe('unidade')
+    expect(unidadeItemExibicao(1, 'pares')).toBe('par')
+    expect(unidadeItemExibicao(3, 'pares')).toBe('pares')
+  })
+  it('texto livre fora da tabela volta como está', () => {
+    expect(unidadeItemExibicao(1, 'caixa')).toBe('caixa')
   })
 })
 

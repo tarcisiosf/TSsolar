@@ -1,8 +1,14 @@
-import type { CompanySettings, PublicProposal, Proposal } from '@/types/firestore'
+import { simularPagamento } from './pagamento'
+import type { Client, CompanySettings, PublicProposal, Proposal } from '@/types/firestore'
 
 export interface ToPublicSnapshotParams {
   proposal: Proposal
   company: CompanySettings
+  client: Client | null
+  taxaCartaoMensal: number
+  parcelasCartao: number
+  taxaFinanciamentoMensal: number
+  parcelasFinanciamento: number
 }
 
 /**
@@ -15,13 +21,14 @@ export interface ToPublicSnapshotParams {
  * que falha caso esses campos apareçam no snapshot.
  */
 export function toPublicSnapshot(params: ToPublicSnapshotParams): PublicProposal {
-  const { proposal, company } = params
+  const { proposal, company, client, taxaCartaoMensal, parcelasCartao, taxaFinanciamentoMensal, parcelasFinanciamento } = params
 
   if (!proposal.resultados) {
     throw new Error('Proposta sem resultados calculados — calcule antes de gerar o snapshot público.')
   }
 
   const precoFinal = proposal.precificacao.precoFinal
+  const pagamento = simularPagamento(precoFinal, taxaCartaoMensal, parcelasCartao, taxaFinanciamentoMensal, parcelasFinanciamento, proposal.entrada.contaAtual)
 
   return {
     publicId: proposal.publicId,
@@ -29,13 +36,28 @@ export function toPublicSnapshot(params: ToPublicSnapshotParams): PublicProposal
     versao: proposal.versao,
     status: proposal.status,
     clienteNome: proposal.clienteNome,
+    cliente: {
+      cpfCnpj: client?.cpfCnpj ?? '',
+      telefone: client?.telefone ?? '',
+      endereco: client?.endereco ?? '',
+      cidade: client?.cidade ?? '',
+    },
     criadoEm: proposal.criadoEm,
+    atualizadoEm: proposal.atualizadoEm,
     validaAte: proposal.validaAte,
     entrada: {
       consumoMedioKwh: proposal.entrada.consumoMedioKwh,
       consumoMensalKwh: proposal.entrada.consumoMensalKwh,
       contaAtual: proposal.entrada.contaAtual,
       ligacao: proposal.entrada.ligacao,
+      tipoImovel: proposal.entrada.tipoImovel,
+      tipoTelhado: proposal.entrada.tipoTelhado,
+      alturaInstalacao: proposal.entrada.alturaInstalacao,
+      inclinacaoGraus: proposal.entrada.inclinacaoGraus,
+      orientacaoTelhado: proposal.entrada.orientacaoTelhado,
+      distribuidora: proposal.entrada.distribuidora,
+      unidadeConsumidora: proposal.entrada.unidadeConsumidora,
+      coordenadas: proposal.entrada.coordenadas,
     },
     sistema: { ...proposal.sistema },
     itens: proposal.itens.map((item) => ({
@@ -61,8 +83,14 @@ export function toPublicSnapshot(params: ToPublicSnapshotParams): PublicProposal
       contaDepoisMediaMensal: proposal.resultados.contaDepoisMediaMensal,
       percentualEconomiaMensal: proposal.resultados.percentualEconomiaMensal,
       geracaoMensalKwh: proposal.resultados.geracaoMensalKwh,
+      pesoEstimado: proposal.resultados.pesoEstimado ?? { totalKg: 0, kgPorM2: 0, estimativa: true },
     },
     precoFinal,
+    condicoesPagamento: proposal.condicoesPagamento,
+    pagamento: {
+      cartao: { parcelas: parcelasCartao, valor: pagamento.parcelaCartao },
+      financiamento: { parcelas: parcelasFinanciamento, valor: pagamento.parcelaFinanciamento },
+    },
     empresa: {
       nome: company.nome,
       parceria: company.parceria,
@@ -75,8 +103,10 @@ export function toPublicSnapshot(params: ToPublicSnapshotParams): PublicProposal
     validadeDias: company.validadeDias,
     prazoInstalacao: company.prazoInstalacao,
     garantias: company.garantias,
+    garantiaDemaisEquipamentos: company.garantiaDemaisEquipamentos,
     servicosInclusos: company.servicosInclusos,
     exclusoes: company.exclusoes,
-    atualizadoEm: proposal.atualizadoEm,
+    observacaoPreliminar: company.observacaoPreliminar,
+    responsavelTecnico: company.responsavelTecnico,
   }
 }

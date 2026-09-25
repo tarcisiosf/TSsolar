@@ -2,7 +2,7 @@ import type { CalcSettings, ProposalEntrada, ProposalPrecificacao, ProposalResul
 import { calcularCenario, calcularCustoKwhGerado } from './cenarios'
 import { calcularConsumoMedioMensal } from './consumo'
 import { calcularContaComSistemaMes, calcularContaSemSistemaMes, percentualFioBPorAno } from './contaComSistema'
-import { calcularRelacaoCcCa } from './dimensionamento'
+import { calcularPesoEstimado, calcularRelacaoCcCa } from './dimensionamento'
 import { gerarGeracaoMensal } from './geracao'
 import { calcularPrecificacao } from './precificacao'
 
@@ -12,6 +12,7 @@ export interface CalcularResultadosPropostaInput {
   servicos: ProposalServicos
   precificacao: ProposalPrecificacao
   inversorPotenciaKw: number
+  pesoKgModulo: number | null
   calc: CalcSettings
   anoCalendarioInicial: number
 }
@@ -23,7 +24,7 @@ export interface CalcularResultadosPropostaSaida {
 
 /** Junta todos os módulos de cálculo (consumo, geração, cenários, precificação) para uma proposta completa. */
 export function calcularResultadosProposta(input: CalcularResultadosPropostaInput): CalcularResultadosPropostaSaida {
-  const { entrada, sistema, servicos, precificacao, inversorPotenciaKw, calc, anoCalendarioInicial } = input
+  const { entrada, sistema, servicos, precificacao, inversorPotenciaKw, pesoKgModulo, calc, anoCalendarioInicial } = input
 
   const consumoMedioMensal = calcularConsumoMedioMensal(entrada)
   const consumoMensalKwh = entrada.consumoMensalKwh ?? new Array(12).fill(consumoMedioMensal)
@@ -107,6 +108,7 @@ export function calcularResultadosProposta(input: CalcularResultadosPropostaInpu
       contaDepoisMediaMensal,
       percentualEconomiaMensal,
       geracaoMensalKwh: geracaoMensalAno1,
+      pesoEstimado: calcularPesoEstimado(sistema.qtdModulos, sistema.areaM2 ?? 0, pesoKgModulo),
     },
   }
 }

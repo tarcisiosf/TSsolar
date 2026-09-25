@@ -35,6 +35,13 @@ const entrada: ProposalEntrada = {
   ligacao: 'mono',
   tipoTelhado: 'ceramico',
   observacoes: '',
+  tipoImovel: '',
+  alturaInstalacao: '',
+  inclinacaoGraus: null,
+  orientacaoTelhado: '',
+  distribuidora: 'Equatorial Goiás',
+  unidadeConsumidora: '',
+  coordenadas: { lat: null, lng: null },
 }
 
 const sistema: ProposalSistema = { potenciaKwp: 4.4, qtdModulos: 8, moduloId: 'mod-1', inversorId: 'inv-1', areaM2: 24 }
@@ -50,6 +57,7 @@ describe('calcularResultadosProposta', () => {
       servicos,
       precificacao,
       inversorPotenciaKw: 5,
+      pesoKgModulo: null,
       calc,
       anoCalendarioInicial: 2026,
     })
@@ -60,5 +68,6 @@ describe('calcularResultadosProposta', () => {
     expect(resultados.economia25AnosOtimista).toBeGreaterThan(resultados.economia25AnosConservador)
     expect(resultados.paybackMesesConservador).not.toBeNull()
     expect(resultados.custoKwhGerado).toBeGreaterThan(0)
+    expect(resultados.pesoEstimado).toBeDefined()
   })
 })

@@ -1,7 +1,10 @@
 import { Circle, Document, Image, Line, Link, Page, StyleSheet, Svg, Text, View } from '@react-pdf/renderer'
-import { formatBRL, formatDateBR, formatKwh, formatKwp, formatNumber, formatPercent } from '@/lib/format'
+import { formatBRL, formatDataPorExtenso, formatDateBR, formatKwh, formatKwp, formatNumber, formatPayback, formatPercent } from '@/lib/format'
+import { unidadeItemExibicao } from '@/features/catalog/catalogDisplay'
+import { ALTURA_LABELS, ORIENTACAO_LABELS, TIPO_IMOVEL_LABELS, TIPO_TELHADO_LABELS } from '@/features/catalog/catalogLabels'
 import type { PublicProposal } from '@/types/firestore'
 import { registrarFontesPdf } from './fonts'
+import { ProposalPdfChart } from './ProposalPdfChart'
 
 registrarFontesPdf()
 
@@ -67,13 +70,40 @@ function StatusChip({ status }: { status: 'incluso' | 'fornecido_cliente' | 'nao
   return <Text style={[styles.chip, { backgroundColor: config.bg, color: config.color }]}>{config.label}</Text>
 }
 
-function publicUrl(publicId: string): string {
-  const origin = typeof window !== 'undefined' ? window.location.origin : 'https://tssolar.com.br'
-  return `${origin}/p/${publicId}`
+function fichaTecnicaCampos(proposal: PublicProposal): { label: string; valor: string }[] {
+  const { entrada, sistema, resultados } = proposal
+  const campos: { label: string; valor: string }[] = []
+  if (entrada.tipoImovel) campos.push({ label: 'Tipo de imóvel', valor: TIPO_IMOVEL_LABELS[entrada.tipoImovel] ?? entrada.tipoImovel })
+  if (entrada.tipoTelhado) campos.push({ label: 'Tipo de telhado', valor: TIPO_TELHADO_LABELS[entrada.tipoTelhado] ?? entrada.tipoTelhado })
+  if (entrada.alturaInstalacao) campos.push({ label: 'Altura', valor: ALTURA_LABELS[entrada.alturaInstalacao] ?? entrada.alturaInstalacao })
+  if (entrada.inclinacaoGraus != null) campos.push({ label: 'Inclinação', valor: `${entrada.inclinacaoGraus}°` })
+  if (entrada.orientacaoTelhado) campos.push({ label: 'Orientação', valor: ORIENTACAO_LABELS[entrada.orientacaoTelhado] ?? entrada.orientacaoTelhado })
+  if (entrada.distribuidora) campos.push({ label: 'Distribuidora', valor: entrada.distribuidora })
+  if (entrada.unidadeConsumidora) campos.push({ label: 'Unidade consumidora', valor: entrada.unidadeConsumidora })
+  if (entrada.coordenadas.lat != null && entrada.coordenadas.lng != null) campos.push({ label: 'Coordenadas', valor: `${entrada.coordenadas.lat}, ${entrada.coordenadas.lng}` })
+  if (sistema.areaM2 != null) campos.push({ label: 'Área necessária', valor: `${formatNumber(sistema.areaM2, 1)} m²` })
+  if (resultados.pesoEstimado.totalKg > 0) {
+    campos.push({
+      label: 'Peso estimado',
+      valor: `${formatNumber(resultados.pesoEstimado.totalKg, 0)} kg (${formatNumber(resultados.pesoEstimado.kgPorM2, 1)} kg/m²)${resultados.pesoEstimado.estimativa ? ' — estimativa' : ''}`,
+    })
+  }
+  return campos
 }
 
-export function ProposalPdf({ proposal }: { proposal: PublicProposal }) {
-  const url = publicUrl(proposal.publicId)
+function clienteHeaderTexto(proposal: PublicProposal): string | null {
+  const linhas = [
+    proposal.clienteNome,
+    proposal.cliente.cpfCnpj,
+    proposal.cliente.telefone,
+    proposal.cliente.endereco,
+    [proposal.cliente.cidade, proposal.entrada.unidadeConsumidora ? `UC ${proposal.entrada.unidadeConsumidora}` : ''].filter(Boolean).join(' · '),
+  ].filter(Boolean)
+  return linhas.length > 0 ? linhas.join(' · ') : null
+}
+
+export function ProposalPdf({ proposal, qrCodeDataUrl, url }: { proposal: PublicProposal; qrCodeDataUrl: string; url: string }) {
+  const clienteHeader = clienteHeaderTexto(proposal)
 
   return (
     <Document title={`Proposta ${proposal.numero}`}>
@@ -95,6 +125,8 @@ export function ProposalPdf({ proposal }: { proposal: PublicProposal }) {
             )}
           </View>
         </View>
+
+        {clienteHeader && <Text style={{ fontSize: 8, color: cores.muted, marginTop: 8 }}>{clienteHeader}</Text>}
 
         <View style={styles.hero} wrap={false}>
           <Text style={[styles.heroText, { fontSize: 9 }]}>Olá, {proposal.clienteNome.split(' ')[0]}</Text>
@@ -125,6 +157,30 @@ export function ProposalPdf({ proposal }: { proposal: PublicProposal }) {
               </Text>
             </View>
           </View>
+          <Text style={[styles.heroText, { fontSize: 7, marginTop: 8 }]}>
+            Mesmo com o sistema, permanece a cobrança da taxa mínima de disponibilidade da rede.
+          </Text>
+        </View>
+
+        <View style={styles.card} wrap={false}>
+          <Text style={styles.sectionTitle}>Ficha técnica da instalação</Text>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
+            {fichaTecnicaCampos(proposal).map((c) => (
+              <View key={c.label} style={{ width: '50%', marginBottom: 6 }}>
+                <Text style={{ fontSize: 7, color: cores.muted, textTransform: 'uppercase' }}>{c.label}</Text>
+                <Text style={{ fontSize: 9, fontWeight: 700 }}>{c.valor}</Text>
+              </View>
+            ))}
+          </View>
+        </View>
+
+        <View style={styles.card} wrap={false}>
+          <Text style={styles.sectionTitle}>Consumo × geração, mês a mês</Text>
+          <ProposalPdfChart
+            meses={['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']}
+            consumo={Array.from({ length: 12 }, (_, i) => Math.round((proposal.entrada.consumoMensalKwh ?? new Array(12).fill(proposal.entrada.consumoMedioKwh ?? 0))[i] ?? 0))}
+            geracao={Array.from({ length: 12 }, (_, i) => Math.round(proposal.resultados.geracaoMensalKwh[i] ?? 0))}
+          />
         </View>
 
         <View style={styles.row}>
@@ -132,17 +188,13 @@ export function ProposalPdf({ proposal }: { proposal: PublicProposal }) {
             <Text style={styles.sectionTitle}>Cenário conservador</Text>
             <Text style={{ fontSize: 14, fontWeight: 800, color: cores.success }}>{formatBRL(proposal.resultados.economia25AnosConservador, false)}</Text>
             <Text style={{ fontSize: 8, color: cores.muted, marginBottom: 4 }}>economia em 25 anos</Text>
-            <Text style={{ fontSize: 9, fontWeight: 700 }}>
-              Payback: {proposal.resultados.paybackMesesConservador ? `${Math.floor(proposal.resultados.paybackMesesConservador / 12)} anos` : 'fora do horizonte'}
-            </Text>
+            <Text style={{ fontSize: 9, fontWeight: 700 }}>Payback: {formatPayback(proposal.resultados.paybackMesesConservador)}</Text>
           </View>
           <View style={[styles.card, { flex: 1 }]} wrap={false}>
             <Text style={styles.sectionTitle}>Cenário otimista</Text>
             <Text style={{ fontSize: 14, fontWeight: 800, color: cores.success }}>{formatBRL(proposal.resultados.economia25AnosOtimista, false)}</Text>
             <Text style={{ fontSize: 8, color: cores.muted, marginBottom: 4 }}>economia em 25 anos</Text>
-            <Text style={{ fontSize: 9, fontWeight: 700 }}>
-              Payback: {proposal.resultados.paybackMesesOtimista ? `${Math.floor(proposal.resultados.paybackMesesOtimista / 12)} anos` : 'fora do horizonte'}
-            </Text>
+            <Text style={{ fontSize: 9, fontWeight: 700 }}>Payback: {formatPayback(proposal.resultados.paybackMesesOtimista)}</Text>
           </View>
         </View>
 
@@ -153,7 +205,7 @@ export function ProposalPdf({ proposal }: { proposal: PublicProposal }) {
               <View>
                 <Text style={{ fontWeight: 700 }}>{item.descricao}</Text>
                 <Text style={{ fontSize: 8, color: cores.muted }}>
-                  {item.quantidade} {item.unidade} {item.especificacao ? `· ${item.especificacao}` : ''}
+                  {item.quantidade} {unidadeItemExibicao(item.quantidade, item.unidade)} {item.especificacao ? `· ${item.especificacao}` : ''}
                 </Text>
               </View>
               <StatusChip status={item.status} />
@@ -161,27 +213,73 @@ export function ProposalPdf({ proposal }: { proposal: PublicProposal }) {
           ))}
         </View>
 
-        <View style={styles.row}>
-          <View style={[styles.card, { flex: 1, marginRight: 8 }]} wrap={false}>
-            <Text style={styles.sectionTitle}>Investimento</Text>
-            <Text style={{ fontSize: 18, fontWeight: 800 }}>{formatBRL(proposal.precoFinal, false)}</Text>
-            <Text style={{ fontSize: 8, color: cores.muted }}>à vista · {formatNumber(proposal.resultados.precoPorWp, 2)} R$/Wp</Text>
+        <View style={styles.card} wrap={false}>
+          <Text style={styles.sectionTitle}>Investimento</Text>
+          <Text style={{ fontSize: 18, fontWeight: 800 }}>{formatBRL(proposal.precoFinal, false)}</Text>
+          <Text style={{ fontSize: 8, color: cores.muted }}>à vista · {formatNumber(proposal.resultados.precoPorWp, 2)} R$/Wp</Text>
+        </View>
+
+        <View style={styles.card} wrap={false}>
+          <Text style={styles.sectionTitle}>Condições de pagamento</Text>
+          <View style={[styles.row, { marginTop: 4 }]}>
+            <View style={{ flex: 1, marginRight: 8 }}>
+              <Text style={{ fontSize: 8, color: cores.muted }}>À vista</Text>
+              <Text style={{ fontSize: 12, fontWeight: 800 }}>{formatBRL(proposal.precoFinal, false)}</Text>
+            </View>
+            <View style={{ flex: 1, marginRight: 8 }}>
+              <Text style={{ fontSize: 8, color: cores.muted }}>Cartão {proposal.pagamento.cartao.parcelas}x</Text>
+              <Text style={{ fontSize: 12, fontWeight: 800 }}>{formatBRL(proposal.pagamento.cartao.valor)}</Text>
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontSize: 8, color: cores.muted }}>Financiamento {proposal.pagamento.financiamento.parcelas}x</Text>
+              <Text style={{ fontSize: 12, fontWeight: 800 }}>{formatBRL(proposal.pagamento.financiamento.valor)}</Text>
+            </View>
           </View>
-          <View style={[styles.card, { flex: 1 }]} wrap={false}>
-            <Text style={styles.sectionTitle}>Incluso e garantias</Text>
-            {proposal.servicosInclusos.map((s, i) => (
-              <Text key={i} style={{ fontSize: 9, marginBottom: 2 }}>
-                · {s}
-              </Text>
-            ))}
-            <Text style={{ fontSize: 9, marginTop: 6 }}>Painéis: {proposal.garantias.paineis} · Inversor: {proposal.garantias.inversor}</Text>
-            <Text style={{ fontSize: 9, marginTop: 2 }}>Prazo: {proposal.prazoInstalacao}</Text>
-          </View>
+          {proposal.condicoesPagamento && <Text style={{ fontSize: 8, color: cores.muted, marginTop: 6 }}>{proposal.condicoesPagamento}</Text>}
+        </View>
+
+        <View style={styles.card} wrap={false}>
+          <Text style={styles.sectionTitle}>Incluso e garantias</Text>
+          {proposal.servicosInclusos.map((s, i) => (
+            <Text key={i} style={{ fontSize: 9, marginBottom: 2 }}>
+              · {s}
+            </Text>
+          ))}
+          <Text style={{ fontSize: 9, marginTop: 6 }}>Painéis: {proposal.garantias.paineis} · Inversor: {proposal.garantias.inversor}</Text>
+          {proposal.garantias.instalacao && <Text style={{ fontSize: 9, marginTop: 2 }}>Instalação: {proposal.garantias.instalacao}</Text>}
+          <Text style={{ fontSize: 9, marginTop: 2 }}>Demais equipamentos e serviços: {proposal.garantiaDemaisEquipamentos}</Text>
+          <Text style={{ fontSize: 9, marginTop: 2 }}>Prazo: {proposal.prazoInstalacao}</Text>
         </View>
 
         <View style={styles.card} wrap={false}>
           <Text style={styles.sectionTitle}>Não incluso</Text>
-          <Text style={{ fontSize: 9 }}>{proposal.exclusoes}</Text>
+          {proposal.exclusoes.map((e, i) => (
+            <Text key={i} style={{ fontSize: 9, marginBottom: 2 }}>
+              · {e}
+            </Text>
+          ))}
+          {proposal.observacaoPreliminar && <Text style={{ fontSize: 7, color: cores.muted, marginTop: 6 }}>{proposal.observacaoPreliminar}</Text>}
+        </View>
+
+        <View style={[styles.row, { marginTop: 8, alignItems: 'flex-end' }]} wrap={false}>
+          <View style={{ flex: 1 }}>
+            <Text style={{ fontSize: 9 }}>
+              {proposal.empresa.cidade.split(',')[0].trim()}, {formatDataPorExtenso(proposal.atualizadoEm.toDate())}
+            </Text>
+            {proposal.responsavelTecnico.nome && (
+              <View style={{ marginTop: 24 }}>
+                <View style={{ width: 180, borderTopWidth: 1, borderTopColor: cores.line, marginBottom: 4 }} />
+                <Text style={{ fontSize: 9, fontWeight: 700 }}>{proposal.responsavelTecnico.nome}</Text>
+                <Text style={{ fontSize: 8, color: cores.muted }}>
+                  {[proposal.responsavelTecnico.titulo, proposal.responsavelTecnico.crea ? `CREA ${proposal.responsavelTecnico.crea}` : ''].filter(Boolean).join(' · ')}
+                </Text>
+              </View>
+            )}
+          </View>
+          <View style={{ alignItems: 'center' }}>
+            <Image src={qrCodeDataUrl} style={{ width: 64, height: 64 }} />
+            <Text style={{ fontSize: 6, color: cores.muted, marginTop: 2, maxWidth: 80, textAlign: 'center' }}>Aponte a câmera para abrir a proposta no celular</Text>
+          </View>
         </View>
 
         <Text

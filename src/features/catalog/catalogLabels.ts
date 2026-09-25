@@ -1,12 +1,15 @@
 import type {
+  AlturaInstalacao,
   ApresentacaoCabo,
   BitolaCaboMm2,
   CategoriaCatalogo,
   CorCabo,
   FormaVendaEstrutura,
   Ligacao,
+  OrientacaoTelhado,
   TecnologiaModulo,
   TipoCabo,
+  TipoImovel,
   TipoInversor,
   TipoPecaEstrutura,
   TipoProtecao,
@@ -47,6 +50,28 @@ export const TIPO_TELHADO_LABELS: Record<TipoTelhado, string> = {
   metalico: 'Metálico',
   laje: 'Laje',
   solo: 'Solo',
+}
+
+export const TIPO_IMOVEL_LABELS: Record<TipoImovel, string> = {
+  residencial: 'Residencial',
+  comercial: 'Comercial',
+  rural: 'Rural',
+  industrial: 'Industrial',
+}
+
+export const ALTURA_LABELS: Record<AlturaInstalacao, string> = {
+  ate_5m: 'Até 5 m',
+  '5_12m': '5 a 12 m',
+  acima_12m: 'Acima de 12 m',
+}
+
+export const ORIENTACAO_LABELS: Record<OrientacaoTelhado, string> = {
+  norte: 'Norte',
+  nordeste: 'Nordeste',
+  noroeste: 'Noroeste',
+  leste: 'Leste',
+  oeste: 'Oeste',
+  sul: 'Sul',
 }
 
 export const TIPO_CABO_LABELS: Record<TipoCabo, string> = {

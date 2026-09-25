@@ -18,5 +18,9 @@ export function registrarFontesPdf() {
       { src: extrabold800, fontWeight: 800 },
     ],
   })
+  // O motor de hifenização padrão do react-pdf quebra mal palavras com "fi"/"fl"
+  // (ex.: "Perfil" vira "Perfl", "fibrocimento" vira "fbrocimento"). Desliga a
+  // quebra silábica por completo — a palavra nunca é dividida no meio de uma linha.
+  Font.registerHyphenationCallback((word) => [word])
   registrado = true
 }

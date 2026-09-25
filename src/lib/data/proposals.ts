@@ -16,6 +16,7 @@ import { db } from '@/lib/firebase'
 import { calcularResultadosProposta } from '@/lib/calc/proposalResultados'
 import { toPublicSnapshot } from '@/lib/calc/toPublicSnapshot'
 import type { Client, Proposal, ProposalItem, ProposalServicos, StatusProposta } from '@/types/firestore'
+import { getClient } from './clients'
 import { getCalcSettings, getCompanySettings, proximoNumeroProposta } from './settings'
 
 const proposalsCollection = collection(db, 'proposals')
@@ -60,21 +61,45 @@ export function criarPropostaVazia(id: string, client: Pick<Client, 'id' | 'nome
       ligacao: 'mono',
       tipoTelhado: '',
       observacoes: '',
+      tipoImovel: '',
+      alturaInstalacao: '',
+      inclinacaoGraus: null,
+      orientacaoTelhado: '',
+      distribuidora: 'Equatorial Goiás',
+      unidadeConsumidora: '',
+      coordenadas: { lat: null, lng: null },
     },
     sistema: { potenciaKwp: 0, qtdModulos: 0, moduloId: null, inversorId: null, areaM2: null },
     itens: [],
     servicos: SERVICOS_VAZIOS,
     precificacao: { modo: 'margem', margem: 0.25, comissao: 0, precoFinal: 0 },
+    condicoesPagamento: 'A combinar',
     resultados: null,
     publicId: crypto.randomUUID(),
     historicoVersoes: [],
   }
 }
 
+const ENTRADA_VAZIA_NOVOS_CAMPOS = {
+  tipoImovel: '' as const,
+  alturaInstalacao: '' as const,
+  inclinacaoGraus: null,
+  orientacaoTelhado: '' as const,
+  distribuidora: 'Equatorial Goiás',
+  unidadeConsumidora: '',
+  coordenadas: { lat: null, lng: null },
+}
+
 /** Propostas salvas antes do campo `materiais` existir não o têm em `servicos` — preenche com o
- * padrão (0) ao ler, sem tocar no Firestore, para não gerar NaN nos cálculos de custo/margem. */
+ * padrão (0) ao ler, sem tocar no Firestore, para não gerar NaN nos cálculos de custo/margem.
+ * O mesmo vale para os campos de instalação de `entrada`, adicionados depois. */
 function normalizarProposal(raw: Proposal): Proposal {
-  return { ...raw, servicos: { ...SERVICOS_VAZIOS, ...raw.servicos } }
+  return {
+    ...raw,
+    servicos: { ...SERVICOS_VAZIOS, ...raw.servicos },
+    entrada: { ...ENTRADA_VAZIA_NOVOS_CAMPOS, ...raw.entrada },
+    condicoesPagamento: raw.condicoesPagamento ?? 'A combinar',
+  }
 }
 
 export async function createProposal(proposal: Proposal): Promise<void> {
@@ -118,11 +143,12 @@ export interface PublicarPropostaResultado {
  * Gera (ou atualiza) a proposta: calcula os resultados, atribui número na primeira vez,
  * cria uma nova versão em edições seguintes e publica o snapshot em publicProposals.
  */
-export async function publicarProposta(id: string, inversorPotenciaKw: number): Promise<PublicarPropostaResultado> {
+export async function publicarProposta(id: string, inversorPotenciaKw: number, pesoKgModulo: number | null): Promise<PublicarPropostaResultado> {
   const [proposalSnap, calc, company] = await Promise.all([getDoc(doc(db, 'proposals', id)), getCalcSettings(), getCompanySettings()])
 
   if (!proposalSnap.exists()) throw new Error('Proposta não encontrada.')
   const proposal = normalizarProposal({ id: proposalSnap.id, ...proposalSnap.data() } as Proposal)
+  const client = await getClient(proposal.clientId)
 
   const anoCalendarioInicial = new Date().getFullYear()
   const { resultados, precoFinal } = calcularResultadosProposta({
@@ -131,6 +157,7 @@ export async function publicarProposta(id: string, inversorPotenciaKw: number): 
     servicos: proposal.servicos,
     precificacao: proposal.precificacao,
     inversorPotenciaKw,
+    pesoKgModulo,
     calc,
     anoCalendarioInicial,
   })
@@ -167,7 +194,15 @@ export async function publicarProposta(id: string, inversorPotenciaKw: number): 
     atualizadoEm: serverTimestamp(),
   })
 
-  const publicSnapshot = toPublicSnapshot({ proposal: propostaAtualizada, company })
+  const publicSnapshot = toPublicSnapshot({
+    proposal: propostaAtualizada,
+    company,
+    client,
+    taxaCartaoMensal: calc.taxaCartaoMensal,
+    parcelasCartao: calc.parcelasCartao,
+    taxaFinanciamentoMensal: calc.taxaFinanciamentoMensal,
+    parcelasFinanciamento: calc.parcelasFinanciamento,
+  })
 
   await setDoc(doc(publicProposalsCollection, proposal.publicId), { ...publicSnapshot, atualizadoEm: serverTimestamp() })
 
@@ -202,7 +237,7 @@ export function itemVazio(): ProposalItem {
     descricao: '',
     especificacao: '',
     quantidade: 1,
-    unidade: 'unidades',
+    unidade: 'unidade',
     custoUnitario: 0,
     status: 'incluso',
   }

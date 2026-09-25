@@ -12,6 +12,7 @@ export function CompanyForm({ initial }: { initial: CompanySettings }) {
   const [form, setForm] = useState<CompanySettings>(initial)
   const [status, setStatus] = useState<SaveStatus>('idle')
   const [novoServico, setNovoServico] = useState('')
+  const [novaExclusao, setNovaExclusao] = useState('')
 
   function set<K extends keyof CompanySettings>(key: K, value: CompanySettings[K]) {
     setForm((f) => ({ ...f, [key]: value }))
@@ -37,6 +38,19 @@ export function CompanyForm({ initial }: { initial: CompanySettings }) {
     set(
       'servicosInclusos',
       form.servicosInclusos.filter((_, i) => i !== index),
+    )
+  }
+
+  function adicionarExclusao() {
+    if (!novaExclusao.trim()) return
+    set('exclusoes', [...form.exclusoes, novaExclusao.trim()])
+    setNovaExclusao('')
+  }
+
+  function removerExclusao(index: number) {
+    set(
+      'exclusoes',
+      form.exclusoes.filter((_, i) => i !== index),
     )
   }
 
@@ -107,6 +121,13 @@ export function CompanyForm({ initial }: { initial: CompanySettings }) {
           onChange={(e) => set('garantias', { ...form.garantias, instalacao: e.target.value })}
         />
       </div>
+      <Input label="Garantia dos demais equipamentos e serviços" value={form.garantiaDemaisEquipamentos} onChange={(e) => set('garantiaDemaisEquipamentos', e.target.value)} />
+
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <Input label="Nome do responsável técnico" value={form.responsavelTecnico.nome} onChange={(e) => set('responsavelTecnico', { ...form.responsavelTecnico, nome: e.target.value })} />
+        <Input label="Título" value={form.responsavelTecnico.titulo} onChange={(e) => set('responsavelTecnico', { ...form.responsavelTecnico, titulo: e.target.value })} placeholder="Engenheiro eletricista" />
+        <Input label="CREA" value={form.responsavelTecnico.crea} onChange={(e) => set('responsavelTecnico', { ...form.responsavelTecnico, crea: e.target.value })} />
+      </div>
 
       <div>
         <p className="mb-2 text-sm font-semibold text-graphite">Serviços inclusos</p>
@@ -140,11 +161,42 @@ export function CompanyForm({ initial }: { initial: CompanySettings }) {
       </div>
 
       <div>
-        <label className="mb-1.5 block text-sm font-semibold text-graphite">Exclusões (texto padrão)</label>
+        <p className="mb-2 text-sm font-semibold text-graphite">Exclusões (o que não está incluso, exibido na proposta)</p>
+        <div className="flex flex-col gap-2">
+          {form.exclusoes.map((exclusao, i) => (
+            <div key={i} className="flex items-center gap-2">
+              <span className="flex-1 rounded-field border border-line bg-ivory px-3 py-2 text-sm text-graphite">{exclusao}</span>
+              <button
+                type="button"
+                onClick={() => removerExclusao(i)}
+                className="flex h-9 w-9 items-center justify-center rounded-field text-muted hover:bg-danger-soft hover:text-danger"
+                aria-label={`Remover ${exclusao}`}
+              >
+                <Trash2 className="h-4 w-4" aria-hidden />
+              </button>
+            </div>
+          ))}
+          <div className="flex items-center gap-2">
+            <input
+              value={novaExclusao}
+              onChange={(e) => setNovaExclusao(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), adicionarExclusao())}
+              placeholder="Adicionar item de exclusão"
+              className="h-10 flex-1 rounded-field border border-[#D9D3C7] bg-surface px-3 text-sm outline-none focus:ring-2 focus:ring-sun"
+            />
+            <Button type="button" variant="secondary" onClick={adicionarExclusao} className="h-10 px-3">
+              <Plus className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <label className="mb-1.5 block text-sm font-semibold text-graphite">Observação preliminar</label>
         <textarea
-          value={form.exclusoes}
-          onChange={(e) => set('exclusoes', e.target.value)}
-          rows={3}
+          value={form.observacaoPreliminar}
+          onChange={(e) => set('observacaoPreliminar', e.target.value)}
+          rows={2}
           className="w-full rounded-field border border-[#D9D3C7] bg-surface p-3 text-sm text-graphite outline-none focus:ring-2 focus:ring-sun"
         />
       </div>
