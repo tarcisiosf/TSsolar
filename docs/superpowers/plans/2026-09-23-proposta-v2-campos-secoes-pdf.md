@@ -1649,6 +1649,27 @@ Dentro da função, desestruturar `pesoKgModulo` de `input` e, no objeto `result
 
 Ler o arquivo primeiro (já existe 1 teste — provavelmente monta um `CalcularResultadosPropostaInput` completo). Adicionar `pesoKgModulo: null` (ou um valor) no input de teste existente para não quebrar a assinatura, e um `expect(resultados.pesoEstimado).toBeDefined()` para confirmar que o campo é propagado.
 
+**Achado durante a execução deste plano (órfão, mesma causa-raiz dos gaps da Tarefa 6):** a constante `entrada: ProposalEntrada` do topo deste arquivo (por volta da linha 30) também está incompleta — falta os 7 campos novos de `ProposalEntrada` (`tipoImovel`, `alturaInstalacao`, `inclinacaoGraus`, `orientacaoTelhado`, `distribuidora`, `unidadeConsumidora`, `coordenadas`) adicionados na Tarefa 2. Nenhuma tarefa do plano tocava nesse fixture — corrigir aqui, já que esta tarefa mexe neste mesmo arquivo:
+
+```ts
+const entrada: ProposalEntrada = {
+  consumoMedioKwh: 500,
+  consumoMensalKwh: null,
+  contaAtual: 495,
+  tarifaKwh: 0.99,
+  ligacao: 'mono',
+  tipoTelhado: 'ceramico',
+  observacoes: '',
+  tipoImovel: '',
+  alturaInstalacao: '',
+  inclinacaoGraus: null,
+  orientacaoTelhado: '',
+  distribuidora: 'Equatorial Goiás',
+  unidadeConsumidora: '',
+  coordenadas: { lat: null, lng: null },
+}
+```
+
 - [ ] **Step 4: `publicarProposta` recebe `pesoKgModulo`**
 
 Em `src/lib/data/proposals.ts`:
