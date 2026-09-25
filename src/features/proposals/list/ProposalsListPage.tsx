@@ -10,9 +10,10 @@ import { StatusPropostaChip } from '@/components/ui/Chip'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { formatBRL, formatDateBR, formatKwp } from '@/lib/format'
 import { duplicateProposal, subscribeProposals, updateProposalStatus } from '@/lib/data/proposals'
-import { getCompanySettings } from '@/lib/data/settings'
+import { getClient } from '@/lib/data/clients'
+import { getCalcSettings, getCompanySettings } from '@/lib/data/settings'
 import { toPublicSnapshot } from '@/lib/calc/toPublicSnapshot'
-import type { CompanySettings, Proposal, StatusProposta } from '@/types/firestore'
+import type { CalcSettings, CompanySettings, Proposal, StatusProposta } from '@/types/firestore'
 
 const STATUS_OPTIONS: { value: StatusProposta | 'todas'; label: string }[] = [
   { value: 'todas', label: 'Todos os status' },
@@ -27,10 +28,12 @@ export function ProposalsListPage() {
   const [propostas, setPropostas] = useState<Proposal[] | null>(null)
   const [busca, setBusca] = useState('')
   const [status, setStatus] = useState<StatusProposta | 'todas'>('todas')
+  const [calc, setCalc] = useState<CalcSettings | null>(null)
   const [company, setCompany] = useState<CompanySettings | null>(null)
 
   useEffect(() => subscribeProposals(setPropostas), [])
   useEffect(() => {
+    getCalcSettings().then(setCalc)
     getCompanySettings().then(setCompany)
   }, [])
 
@@ -50,9 +53,18 @@ export function ProposalsListPage() {
   }
 
   async function handleBaixarPdf(p: Proposal) {
-    if (!company || !p.resultados) return
+    if (!calc || !company || !p.resultados) return
+    const cliente = await getClient(p.clientId)
     const { downloadProposalPdf } = await import('@/features/pdf/downloadProposalPdf')
-    const snapshot = toPublicSnapshot({ proposal: p, company })
+    const snapshot = toPublicSnapshot({
+      proposal: p,
+      company,
+      client: cliente,
+      taxaCartaoMensal: calc.taxaCartaoMensal,
+      parcelasCartao: calc.parcelasCartao,
+      taxaFinanciamentoMensal: calc.taxaFinanciamentoMensal,
+      parcelasFinanciamento: calc.parcelasFinanciamento,
+    })
     await downloadProposalPdf(snapshot)
   }
 

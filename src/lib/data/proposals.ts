@@ -16,6 +16,7 @@ import { db } from '@/lib/firebase'
 import { calcularResultadosProposta } from '@/lib/calc/proposalResultados'
 import { toPublicSnapshot } from '@/lib/calc/toPublicSnapshot'
 import type { Client, Proposal, ProposalItem, ProposalServicos, StatusProposta } from '@/types/firestore'
+import { getClient } from './clients'
 import { getCalcSettings, getCompanySettings, proximoNumeroProposta } from './settings'
 
 const proposalsCollection = collection(db, 'proposals')
@@ -147,6 +148,7 @@ export async function publicarProposta(id: string, inversorPotenciaKw: number, p
 
   if (!proposalSnap.exists()) throw new Error('Proposta não encontrada.')
   const proposal = normalizarProposal({ id: proposalSnap.id, ...proposalSnap.data() } as Proposal)
+  const client = await getClient(proposal.clientId)
 
   const anoCalendarioInicial = new Date().getFullYear()
   const { resultados, precoFinal } = calcularResultadosProposta({
@@ -192,7 +194,15 @@ export async function publicarProposta(id: string, inversorPotenciaKw: number, p
     atualizadoEm: serverTimestamp(),
   })
 
-  const publicSnapshot = toPublicSnapshot({ proposal: propostaAtualizada, company })
+  const publicSnapshot = toPublicSnapshot({
+    proposal: propostaAtualizada,
+    company,
+    client,
+    taxaCartaoMensal: calc.taxaCartaoMensal,
+    parcelasCartao: calc.parcelasCartao,
+    taxaFinanciamentoMensal: calc.taxaFinanciamentoMensal,
+    parcelasFinanciamento: calc.parcelasFinanciamento,
+  })
 
   await setDoc(doc(publicProposalsCollection, proposal.publicId), { ...publicSnapshot, atualizadoEm: serverTimestamp() })
 

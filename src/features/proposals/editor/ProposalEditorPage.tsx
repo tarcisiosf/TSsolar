@@ -163,12 +163,21 @@ export function ProposalEditorPage() {
   const previewPublico: PublicProposal | null = useMemo(() => {
     if (!proposal || !draft || !company || !calc || !resultados) return null
     const propostaTemp: Proposal = { ...proposal, ...draft, precificacao: { ...draft.precificacao, precoFinal }, resultados }
+    const clienteSelecionado = clients.find((c) => c.id === draft.clientId) ?? null
     try {
-      return toPublicSnapshot({ proposal: propostaTemp, company })
+      return toPublicSnapshot({
+        proposal: propostaTemp,
+        company,
+        client: clienteSelecionado,
+        taxaCartaoMensal: calc.taxaCartaoMensal,
+        parcelasCartao: calc.parcelasCartao,
+        taxaFinanciamentoMensal: calc.taxaFinanciamentoMensal,
+        parcelasFinanciamento: calc.parcelasFinanciamento,
+      })
     } catch {
       return null
     }
-  }, [proposal, draft, company, calc, resultados, precoFinal])
+  }, [proposal, draft, company, calc, resultados, precoFinal, clients])
 
   async function handleGerarProposta() {
     if (!id) return

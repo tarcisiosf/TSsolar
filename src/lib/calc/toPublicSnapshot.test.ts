@@ -1,6 +1,6 @@
 import { Timestamp } from 'firebase/firestore'
 import { describe, expect, it } from 'vitest'
-import type { CompanySettings, Proposal } from '@/types/firestore'
+import type { Client, CompanySettings, Proposal } from '@/types/firestore'
 import { toPublicSnapshot } from './toPublicSnapshot'
 
 // Valores-sentinela para custo/margem/comissão: se algum deles aparecer no JSON do
@@ -31,6 +31,13 @@ function buildProposal(): Proposal {
       ligacao: 'mono',
       tipoTelhado: 'ceramico',
       observacoes: '',
+      tipoImovel: '',
+      alturaInstalacao: '',
+      inclinacaoGraus: null,
+      orientacaoTelhado: '',
+      distribuidora: 'Equatorial Goiás',
+      unidadeConsumidora: '',
+      coordenadas: { lat: null, lng: null },
     },
     sistema: { potenciaKwp: 4.4, qtdModulos: 8, moduloId: 'mod-1', inversorId: 'inv-1', areaM2: 24 },
     itens: [
@@ -47,6 +54,7 @@ function buildProposal(): Proposal {
     ],
     servicos: { materiais: 0, projeto: 300, instalacao: 1800, art: 150, frete: 200, homologacao: 250, outros: [] },
     precificacao: { modo: 'margem', margem: MARGEM_SENTINELA, comissao: COMISSAO_SENTINELA, precoFinal: PRECO_FINAL },
+    condicoesPagamento: 'A combinar',
     resultados: {
       custoTotal: CUSTO_UNITARIO_SENTINELA * 8,
       lucroEstimado: 12345.67,
@@ -65,6 +73,7 @@ function buildProposal(): Proposal {
       contaDepoisMediaMensal: 55,
       percentualEconomiaMensal: 0.888,
       geracaoMensalKwh: new Array(12).fill(500),
+      pesoEstimado: { totalKg: 324, kgPorM2: 13.5, estimativa: true },
     },
     publicId: 'public-abc-123',
     historicoVersoes: [],
@@ -85,7 +94,25 @@ function buildCompany(): CompanySettings {
     prazoInstalacao: 'até 45 dias após a aprovação da Equatorial Goiás',
     garantias: { paineis: '25 anos', inversor: '10 anos', instalacao: '' },
     servicosInclusos: ['Projeto', 'Instalação', 'Homologação'],
-    exclusoes: 'Não inclui reforço de padrão de entrada.',
+    exclusoes: ['Não inclui reforço de padrão de entrada.'],
+    observacaoPreliminar: 'Orçamento preliminar.',
+    garantiaDemaisEquipamentos: '1 ano',
+    responsavelTecnico: { nome: 'Fulano', titulo: 'Engenheiro', crea: '123' },
+  }
+}
+
+function buildClient(): Client {
+  return {
+    id: 'client-1',
+    nome: 'João da Silva',
+    telefone: '5562988887777',
+    email: 'joao@example.com',
+    cidade: 'Goiânia, GO',
+    endereco: 'Rua das Flores, 123',
+    observacoes: '',
+    cpfCnpj: '111.444.777-35',
+    cep: '74000-000',
+    criadoEm: Timestamp.now(),
   }
 }
 
@@ -103,7 +130,15 @@ function collectKeys(value: unknown, keys = new Set<string>()): Set<string> {
 
 describe('toPublicSnapshot — regra de ouro (allowlist)', () => {
   it('nunca inclui campos de custo, margem ou comissão', () => {
-    const snapshot = toPublicSnapshot({ proposal: buildProposal(), company: buildCompany() })
+    const snapshot = toPublicSnapshot({
+      proposal: buildProposal(),
+      company: buildCompany(),
+      client: buildClient(),
+      taxaCartaoMensal: 0.0099,
+      parcelasCartao: 12,
+      taxaFinanciamentoMensal: 0.0149,
+      parcelasFinanciamento: 60,
+    })
 
     const keys = collectKeys(snapshot)
     for (const forbidden of FORBIDDEN_KEYS) {
@@ -117,11 +152,20 @@ describe('toPublicSnapshot — regra de ouro (allowlist)', () => {
   })
 
   it('mantém os dados que o cliente precisa ver', () => {
-    const snapshot = toPublicSnapshot({ proposal: buildProposal(), company: buildCompany() })
+    const snapshot = toPublicSnapshot({
+      proposal: buildProposal(),
+      company: buildCompany(),
+      client: buildClient(),
+      taxaCartaoMensal: 0.0099,
+      parcelasCartao: 12,
+      taxaFinanciamentoMensal: 0.0149,
+      parcelasFinanciamento: 60,
+    })
 
     expect(snapshot.numero).toBe('TS-2026-014')
     expect(snapshot.precoFinal).toBe(PRECO_FINAL)
     expect(snapshot.itens[0].descricao).toBe('Módulo 550W')
     expect(snapshot.empresa.parceria.nome).toBe('TechSolar')
+    expect(snapshot.cliente.cpfCnpj).toBe('111.444.777-35')
   })
 })
