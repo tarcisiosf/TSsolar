@@ -50,6 +50,7 @@ describe('calcularResultadosProposta', () => {
       servicos,
       precificacao,
       inversorPotenciaKw: 5,
+      pesoKgModulo: null,
       calc,
       anoCalendarioInicial: 2026,
     })
@@ -60,5 +61,6 @@ describe('calcularResultadosProposta', () => {
     expect(resultados.economia25AnosOtimista).toBeGreaterThan(resultados.economia25AnosConservador)
     expect(resultados.paybackMesesConservador).not.toBeNull()
     expect(resultados.custoKwhGerado).toBeGreaterThan(0)
+    expect(resultados.pesoEstimado).toBeDefined()
   })
 })

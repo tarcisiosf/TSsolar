@@ -117,6 +117,9 @@ export function ProposalEditorPage() {
 
   const inversorSelecionado = useMemo(() => catalogo.find((c) => c.id === draft?.sistema.inversorId) ?? null, [catalogo, draft?.sistema.inversorId])
 
+  const moduloSelecionado = useMemo(() => catalogo.find((c) => c.id === draft?.sistema.moduloId) ?? null, [catalogo, draft?.sistema.moduloId])
+  const pesoKgModulo = moduloSelecionado && moduloSelecionado.categoria === 'modulo' ? moduloSelecionado.pesoKg : null
+
   const { resultados, precoFinal } = useMemo(() => {
     if (!draft || !calc) return { resultados: null, precoFinal: 0 }
     try {
@@ -126,13 +129,14 @@ export function ProposalEditorPage() {
         servicos: draft.servicos,
         precificacao: draft.precificacao,
         inversorPotenciaKw: inversorSelecionado && inversorSelecionado.categoria === 'inversor' ? inversorSelecionado.potenciaKw : 0,
+        pesoKgModulo,
         calc,
         anoCalendarioInicial: new Date().getFullYear(),
       })
     } catch {
       return { resultados: null, precoFinal: 0 }
     }
-  }, [draft, calc, inversorSelecionado])
+  }, [draft, calc, inversorSelecionado, pesoKgModulo])
 
   // Autosave com debounce curto a cada alteração do rascunho.
   useDebouncedEffect(
@@ -170,7 +174,7 @@ export function ProposalEditorPage() {
     if (!id) return
     setGerando(true)
     try {
-      await publicarProposta(id, inversorSelecionado && inversorSelecionado.categoria === 'inversor' ? inversorSelecionado.potenciaKw : 0)
+      await publicarProposta(id, inversorSelecionado && inversorSelecionado.categoria === 'inversor' ? inversorSelecionado.potenciaKw : 0, pesoKgModulo)
       setStep(STEPS.length - 1)
     } catch (e) {
       alert(e instanceof Error ? e.message : 'Não foi possível gerar a proposta.')

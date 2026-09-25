@@ -142,7 +142,7 @@ export interface PublicarPropostaResultado {
  * Gera (ou atualiza) a proposta: calcula os resultados, atribui número na primeira vez,
  * cria uma nova versão em edições seguintes e publica o snapshot em publicProposals.
  */
-export async function publicarProposta(id: string, inversorPotenciaKw: number): Promise<PublicarPropostaResultado> {
+export async function publicarProposta(id: string, inversorPotenciaKw: number, pesoKgModulo: number | null): Promise<PublicarPropostaResultado> {
   const [proposalSnap, calc, company] = await Promise.all([getDoc(doc(db, 'proposals', id)), getCalcSettings(), getCompanySettings()])
 
   if (!proposalSnap.exists()) throw new Error('Proposta não encontrada.')
@@ -155,6 +155,7 @@ export async function publicarProposta(id: string, inversorPotenciaKw: number): 
     servicos: proposal.servicos,
     precificacao: proposal.precificacao,
     inversorPotenciaKw,
+    pesoKgModulo,
     calc,
     anoCalendarioInicial,
   })
