@@ -5,8 +5,8 @@ import { Segmented } from '@/components/ui/Segmented'
 import { Select } from '@/components/ui/Select'
 import { ChevronDown } from 'lucide-react'
 import { sugerirTarifa } from '@/lib/calc/consumo'
-import { TIPO_TELHADO_LABELS } from '@/features/catalog/catalogLabels'
-import type { AlturaInstalacao, Ligacao, OrientacaoTelhado, ProposalEntrada, TipoImovel } from '@/types/firestore'
+import { ALTURA_LABELS, ORIENTACAO_LABELS, TIPO_IMOVEL_LABELS, TIPO_TELHADO_LABELS } from '@/features/catalog/catalogLabels'
+import type { Ligacao, ProposalEntrada } from '@/types/firestore'
 
 const MESES = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']
 
@@ -130,28 +130,6 @@ export function ConsumoStep({ entrada, onChange }: { entrada: ProposalEntrada; o
       </div>
     </div>
   )
-}
-
-const TIPO_IMOVEL_LABELS: Record<TipoImovel, string> = {
-  residencial: 'Residencial',
-  comercial: 'Comercial',
-  rural: 'Rural',
-  industrial: 'Industrial',
-}
-
-const ALTURA_LABELS: Record<AlturaInstalacao, string> = {
-  ate_5m: 'Até 5 m',
-  '5_12m': '5 a 12 m',
-  acima_12m: 'Acima de 12 m',
-}
-
-const ORIENTACAO_LABELS: Record<OrientacaoTelhado, string> = {
-  norte: 'Norte',
-  nordeste: 'Nordeste',
-  noroeste: 'Noroeste',
-  leste: 'Leste',
-  oeste: 'Oeste',
-  sul: 'Sul',
 }
 
 function DadosInstalacaoSection({

@@ -87,15 +87,13 @@ export function ClientSheet({
           <Input label="Endereço" value={form.endereco} onChange={(e) => set('endereco', e.target.value)} />
         </div>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <div>
-            <Input
-              label="CPF/CNPJ"
-              hint="Opcional"
-              value={form.cpfCnpj}
-              onChange={(e) => set('cpfCnpj', maskCpfCnpj(e.target.value))}
-            />
-            {form.cpfCnpj && !isValidCpfCnpj(form.cpfCnpj) && <p className="mt-1 text-xs font-semibold text-danger">CPF/CNPJ inválido — confira os números.</p>}
-          </div>
+          <Input
+            label="CPF/CNPJ"
+            hint="Opcional"
+            value={form.cpfCnpj}
+            onChange={(e) => set('cpfCnpj', maskCpfCnpj(e.target.value))}
+            error={form.cpfCnpj && !isValidCpfCnpj(form.cpfCnpj) ? 'CPF/CNPJ inválido — confira os números.' : undefined}
+          />
           <Input label="CEP" hint="Opcional" value={form.cep} onChange={(e) => set('cep', maskCep(e.target.value))} placeholder="00000-000" />
         </div>
         <div>

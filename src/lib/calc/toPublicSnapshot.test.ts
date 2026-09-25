@@ -1,6 +1,7 @@
 import { Timestamp } from 'firebase/firestore'
 import { describe, expect, it } from 'vitest'
 import type { Client, CompanySettings, Proposal } from '@/types/firestore'
+import { calcularPMT } from './pagamento'
 import { toPublicSnapshot } from './toPublicSnapshot'
 
 // Valores-sentinela para custo/margem/comissão: se algum deles aparecer no JSON do
@@ -152,14 +153,19 @@ describe('toPublicSnapshot — regra de ouro (allowlist)', () => {
   })
 
   it('mantém os dados que o cliente precisa ver', () => {
+    const taxaCartaoMensal = 0.0099
+    const parcelasCartao = 12
+    const taxaFinanciamentoMensal = 0.0149
+    const parcelasFinanciamento = 60
+
     const snapshot = toPublicSnapshot({
       proposal: buildProposal(),
       company: buildCompany(),
       client: buildClient(),
-      taxaCartaoMensal: 0.0099,
-      parcelasCartao: 12,
-      taxaFinanciamentoMensal: 0.0149,
-      parcelasFinanciamento: 60,
+      taxaCartaoMensal,
+      parcelasCartao,
+      taxaFinanciamentoMensal,
+      parcelasFinanciamento,
     })
 
     expect(snapshot.numero).toBe('TS-2026-014')
@@ -167,5 +173,14 @@ describe('toPublicSnapshot — regra de ouro (allowlist)', () => {
     expect(snapshot.itens[0].descricao).toBe('Módulo 550W')
     expect(snapshot.empresa.parceria.nome).toBe('TechSolar')
     expect(snapshot.cliente.cpfCnpj).toBe('111.444.777-35')
+
+    expect(snapshot.pagamento.cartao.parcelas).toBe(parcelasCartao)
+    expect(snapshot.pagamento.cartao.valor).toBeCloseTo(calcularPMT(PRECO_FINAL, taxaCartaoMensal, parcelasCartao))
+    expect(snapshot.pagamento.financiamento.parcelas).toBe(parcelasFinanciamento)
+    expect(snapshot.pagamento.financiamento.valor).toBeCloseTo(calcularPMT(PRECO_FINAL, taxaFinanciamentoMensal, parcelasFinanciamento))
+
+    expect(snapshot.condicoesPagamento).toBe(buildProposal().condicoesPagamento)
+    expect(snapshot.exclusoes).toEqual(buildCompany().exclusoes)
+    expect(snapshot.responsavelTecnico).toEqual(buildCompany().responsavelTecnico)
   })
 })

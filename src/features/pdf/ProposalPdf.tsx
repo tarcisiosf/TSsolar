@@ -1,7 +1,7 @@
 import { Circle, Document, Image, Line, Link, Page, StyleSheet, Svg, Text, View } from '@react-pdf/renderer'
 import { formatBRL, formatDataPorExtenso, formatDateBR, formatKwh, formatKwp, formatNumber, formatPayback, formatPercent } from '@/lib/format'
 import { unidadeItemExibicao } from '@/features/catalog/catalogDisplay'
-import { TIPO_TELHADO_LABELS } from '@/features/catalog/catalogLabels'
+import { ALTURA_LABELS, ORIENTACAO_LABELS, TIPO_IMOVEL_LABELS, TIPO_TELHADO_LABELS } from '@/features/catalog/catalogLabels'
 import type { PublicProposal } from '@/types/firestore'
 import { registrarFontesPdf } from './fonts'
 import { ProposalPdfChart } from './ProposalPdfChart'
@@ -70,10 +70,6 @@ function StatusChip({ status }: { status: 'incluso' | 'fornecido_cliente' | 'nao
   return <Text style={[styles.chip, { backgroundColor: config.bg, color: config.color }]}>{config.label}</Text>
 }
 
-const TIPO_IMOVEL_LABELS: Record<string, string> = { residencial: 'Residencial', comercial: 'Comercial', rural: 'Rural', industrial: 'Industrial' }
-const ALTURA_LABELS: Record<string, string> = { ate_5m: 'Até 5 m', '5_12m': '5 a 12 m', acima_12m: 'Acima de 12 m' }
-const ORIENTACAO_LABELS: Record<string, string> = { norte: 'Norte', nordeste: 'Nordeste', noroeste: 'Noroeste', leste: 'Leste', oeste: 'Oeste', sul: 'Sul' }
-
 function fichaTecnicaCampos(proposal: PublicProposal): { label: string; valor: string }[] {
   const { entrada, sistema, resultados } = proposal
   const campos: { label: string; valor: string }[] = []
@@ -86,14 +82,29 @@ function fichaTecnicaCampos(proposal: PublicProposal): { label: string; valor: s
   if (entrada.unidadeConsumidora) campos.push({ label: 'Unidade consumidora', valor: entrada.unidadeConsumidora })
   if (entrada.coordenadas.lat != null && entrada.coordenadas.lng != null) campos.push({ label: 'Coordenadas', valor: `${entrada.coordenadas.lat}, ${entrada.coordenadas.lng}` })
   if (sistema.areaM2 != null) campos.push({ label: 'Área necessária', valor: `${formatNumber(sistema.areaM2, 1)} m²` })
-  campos.push({
-    label: 'Peso estimado',
-    valor: `${formatNumber(resultados.pesoEstimado.totalKg, 0)} kg (${formatNumber(resultados.pesoEstimado.kgPorM2, 1)} kg/m²)${resultados.pesoEstimado.estimativa ? ' — estimativa' : ''}`,
-  })
+  if (resultados.pesoEstimado.totalKg > 0) {
+    campos.push({
+      label: 'Peso estimado',
+      valor: `${formatNumber(resultados.pesoEstimado.totalKg, 0)} kg (${formatNumber(resultados.pesoEstimado.kgPorM2, 1)} kg/m²)${resultados.pesoEstimado.estimativa ? ' — estimativa' : ''}`,
+    })
+  }
   return campos
 }
 
+function clienteHeaderTexto(proposal: PublicProposal): string | null {
+  const linhas = [
+    proposal.clienteNome,
+    proposal.cliente.cpfCnpj,
+    proposal.cliente.telefone,
+    proposal.cliente.endereco,
+    [proposal.cliente.cidade, proposal.entrada.unidadeConsumidora ? `UC ${proposal.entrada.unidadeConsumidora}` : ''].filter(Boolean).join(' · '),
+  ].filter(Boolean)
+  return linhas.length > 0 ? linhas.join(' · ') : null
+}
+
 export function ProposalPdf({ proposal, qrCodeDataUrl, url }: { proposal: PublicProposal; qrCodeDataUrl: string; url: string }) {
+  const clienteHeader = clienteHeaderTexto(proposal)
+
   return (
     <Document title={`Proposta ${proposal.numero}`}>
       <Page size="A4" style={styles.page}>
@@ -115,16 +126,7 @@ export function ProposalPdf({ proposal, qrCodeDataUrl, url }: { proposal: Public
           </View>
         </View>
 
-        {(() => {
-          const linhas = [
-            proposal.clienteNome,
-            proposal.cliente.cpfCnpj,
-            proposal.cliente.telefone,
-            proposal.cliente.endereco,
-            [proposal.cliente.cidade, proposal.entrada.unidadeConsumidora ? `UC ${proposal.entrada.unidadeConsumidora}` : ''].filter(Boolean).join(' · '),
-          ].filter(Boolean)
-          return linhas.length > 0 ? <Text style={{ fontSize: 8, color: cores.muted, marginTop: 8 }}>{linhas.join(' · ')}</Text> : null
-        })()}
+        {clienteHeader && <Text style={{ fontSize: 8, color: cores.muted, marginTop: 8 }}>{clienteHeader}</Text>}
 
         <View style={styles.hero} wrap={false}>
           <Text style={[styles.heroText, { fontSize: 9 }]}>Olá, {proposal.clienteNome.split(' ')[0]}</Text>
@@ -161,15 +163,6 @@ export function ProposalPdf({ proposal, qrCodeDataUrl, url }: { proposal: Public
         </View>
 
         <View style={styles.card} wrap={false}>
-          <Text style={styles.sectionTitle}>Consumo × geração, mês a mês</Text>
-          <ProposalPdfChart
-            meses={['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']}
-            consumo={(proposal.entrada.consumoMensalKwh ?? new Array(12).fill(proposal.entrada.consumoMedioKwh ?? 0)).map((v) => Math.round(v ?? 0))}
-            geracao={proposal.resultados.geracaoMensalKwh.map((v) => Math.round(v))}
-          />
-        </View>
-
-        <View style={styles.card} wrap={false}>
           <Text style={styles.sectionTitle}>Ficha técnica da instalação</Text>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
             {fichaTecnicaCampos(proposal).map((c) => (
@@ -179,6 +172,15 @@ export function ProposalPdf({ proposal, qrCodeDataUrl, url }: { proposal: Public
               </View>
             ))}
           </View>
+        </View>
+
+        <View style={styles.card} wrap={false}>
+          <Text style={styles.sectionTitle}>Consumo × geração, mês a mês</Text>
+          <ProposalPdfChart
+            meses={['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']}
+            consumo={Array.from({ length: 12 }, (_, i) => Math.round((proposal.entrada.consumoMensalKwh ?? new Array(12).fill(proposal.entrada.consumoMedioKwh ?? 0))[i] ?? 0))}
+            geracao={Array.from({ length: 12 }, (_, i) => Math.round(proposal.resultados.geracaoMensalKwh[i] ?? 0))}
+          />
         </View>
 
         <View style={styles.row}>
@@ -212,6 +214,12 @@ export function ProposalPdf({ proposal, qrCodeDataUrl, url }: { proposal: Public
         </View>
 
         <View style={styles.card} wrap={false}>
+          <Text style={styles.sectionTitle}>Investimento</Text>
+          <Text style={{ fontSize: 18, fontWeight: 800 }}>{formatBRL(proposal.precoFinal, false)}</Text>
+          <Text style={{ fontSize: 8, color: cores.muted }}>à vista · {formatNumber(proposal.resultados.precoPorWp, 2)} R$/Wp</Text>
+        </View>
+
+        <View style={styles.card} wrap={false}>
           <Text style={styles.sectionTitle}>Condições de pagamento</Text>
           <View style={[styles.row, { marginTop: 4 }]}>
             <View style={{ flex: 1, marginRight: 8 }}>
@@ -230,23 +238,17 @@ export function ProposalPdf({ proposal, qrCodeDataUrl, url }: { proposal: Public
           {proposal.condicoesPagamento && <Text style={{ fontSize: 8, color: cores.muted, marginTop: 6 }}>{proposal.condicoesPagamento}</Text>}
         </View>
 
-        <View style={styles.row}>
-          <View style={[styles.card, { flex: 1, marginRight: 8 }]} wrap={false}>
-            <Text style={styles.sectionTitle}>Investimento</Text>
-            <Text style={{ fontSize: 18, fontWeight: 800 }}>{formatBRL(proposal.precoFinal, false)}</Text>
-            <Text style={{ fontSize: 8, color: cores.muted }}>à vista · {formatNumber(proposal.resultados.precoPorWp, 2)} R$/Wp</Text>
-          </View>
-          <View style={[styles.card, { flex: 1 }]} wrap={false}>
-            <Text style={styles.sectionTitle}>Incluso e garantias</Text>
-            {proposal.servicosInclusos.map((s, i) => (
-              <Text key={i} style={{ fontSize: 9, marginBottom: 2 }}>
-                · {s}
-              </Text>
-            ))}
-            <Text style={{ fontSize: 9, marginTop: 6 }}>Painéis: {proposal.garantias.paineis} · Inversor: {proposal.garantias.inversor}</Text>
-            <Text style={{ fontSize: 9, marginTop: 2 }}>Demais equipamentos e serviços: {proposal.garantiaDemaisEquipamentos}</Text>
-            <Text style={{ fontSize: 9, marginTop: 2 }}>Prazo: {proposal.prazoInstalacao}</Text>
-          </View>
+        <View style={styles.card} wrap={false}>
+          <Text style={styles.sectionTitle}>Incluso e garantias</Text>
+          {proposal.servicosInclusos.map((s, i) => (
+            <Text key={i} style={{ fontSize: 9, marginBottom: 2 }}>
+              · {s}
+            </Text>
+          ))}
+          <Text style={{ fontSize: 9, marginTop: 6 }}>Painéis: {proposal.garantias.paineis} · Inversor: {proposal.garantias.inversor}</Text>
+          {proposal.garantias.instalacao && <Text style={{ fontSize: 9, marginTop: 2 }}>Instalação: {proposal.garantias.instalacao}</Text>}
+          <Text style={{ fontSize: 9, marginTop: 2 }}>Demais equipamentos e serviços: {proposal.garantiaDemaisEquipamentos}</Text>
+          <Text style={{ fontSize: 9, marginTop: 2 }}>Prazo: {proposal.prazoInstalacao}</Text>
         </View>
 
         <View style={styles.card} wrap={false}>

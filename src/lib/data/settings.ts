@@ -59,7 +59,7 @@ const calcRef = doc(db, 'settings', 'calc')
 /** Documentos salvos antes destes campos existirem (ou com `exclusoes` no formato antigo,
  * texto único em vez de lista) ficam com os campos ausentes — mescla com o padrão ao ler,
  * sem tocar no Firestore. Mesmo padrão de `getCalcSettings`. */
-function normalizarCompanySettings(raw: Partial<CompanySettings> & Record<string, unknown>): CompanySettings {
+export function normalizarCompanySettings(raw: Partial<CompanySettings> & Record<string, unknown>): CompanySettings {
   const exclusoesBrutas = raw.exclusoes
   const exclusoes = Array.isArray(exclusoesBrutas)
     ? exclusoesBrutas

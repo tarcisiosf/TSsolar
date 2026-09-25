@@ -4,7 +4,7 @@ import { BrandLogo } from '@/components/ui/SunLogo'
 import { StatusItemChip } from '@/components/ui/Chip'
 import { formatBRL, formatDataPorExtenso, formatDateBR, formatKwh, formatKwp, formatNumber, formatPayback, formatPercent } from '@/lib/format'
 import { unidadeItemExibicao } from '@/features/catalog/catalogDisplay'
-import { TIPO_TELHADO_LABELS } from '@/features/catalog/catalogLabels'
+import { ALTURA_LABELS, ORIENTACAO_LABELS, TIPO_IMOVEL_LABELS, TIPO_TELHADO_LABELS } from '@/features/catalog/catalogLabels'
 import type { PublicProposal } from '@/types/firestore'
 
 const MESES = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']
@@ -273,10 +273,6 @@ function ClienteHeaderInfo({ proposal }: { proposal: PublicProposal }) {
   )
 }
 
-const TIPO_IMOVEL_LABELS: Record<string, string> = { residencial: 'Residencial', comercial: 'Comercial', rural: 'Rural', industrial: 'Industrial' }
-const ALTURA_LABELS: Record<string, string> = { ate_5m: 'Até 5 m', '5_12m': '5 a 12 m', acima_12m: 'Acima de 12 m' }
-const ORIENTACAO_LABELS: Record<string, string> = { norte: 'Norte', nordeste: 'Nordeste', noroeste: 'Noroeste', leste: 'Leste', oeste: 'Oeste', sul: 'Sul' }
-
 function FichaTecnicaCard({ proposal }: { proposal: PublicProposal }) {
   const { entrada, sistema, resultados } = proposal
   const campos: { label: string; valor: string }[] = []
@@ -290,10 +286,12 @@ function FichaTecnicaCard({ proposal }: { proposal: PublicProposal }) {
   if (entrada.unidadeConsumidora) campos.push({ label: 'Unidade consumidora', valor: entrada.unidadeConsumidora })
   if (entrada.coordenadas.lat != null && entrada.coordenadas.lng != null) campos.push({ label: 'Coordenadas', valor: `${entrada.coordenadas.lat}, ${entrada.coordenadas.lng}` })
   if (sistema.areaM2 != null) campos.push({ label: 'Área necessária', valor: `${formatNumber(sistema.areaM2, 1)} m²` })
-  campos.push({
-    label: 'Peso estimado',
-    valor: `${formatNumber(resultados.pesoEstimado.totalKg, 0)} kg (${formatNumber(resultados.pesoEstimado.kgPorM2, 1)} kg/m²)${resultados.pesoEstimado.estimativa ? ' — estimativa' : ''}`,
-  })
+  if (resultados.pesoEstimado.totalKg > 0) {
+    campos.push({
+      label: 'Peso estimado',
+      valor: `${formatNumber(resultados.pesoEstimado.totalKg, 0)} kg (${formatNumber(resultados.pesoEstimado.kgPorM2, 1)} kg/m²)${resultados.pesoEstimado.estimativa ? ' — estimativa' : ''}`,
+    })
+  }
 
   if (campos.length === 0) return null
 
