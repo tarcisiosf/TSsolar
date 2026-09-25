@@ -13,9 +13,19 @@ export const DEFAULT_COMPANY: CompanySettings = {
   logoUrl: '/logo.png',
   validadeDias: 15,
   prazoInstalacao: 'até 45 dias após a aprovação da Equatorial Goiás',
-  garantias: { paineis: '25 anos', inversor: '10 anos', instalacao: '' },
+  garantias: { paineis: '25 anos de garantia de performance', inversor: '10 anos', instalacao: '' },
   servicosInclusos: ['Projeto elétrico', 'Instalação completa', 'ART', 'Homologação junto à Equatorial Goiás'],
-  exclusoes: 'Não inclui reforço de padrão de entrada, poda de árvores ou obras civis não previstas no orçamento.',
+  exclusoes: [
+    'Reforços estruturais na edificação, quando necessários',
+    'Obras civis não previstas neste orçamento',
+    'Adequação do padrão de entrada às normas da distribuidora',
+    'Poda de árvores ou remoção de obstáculos de sombreamento',
+    'Material adicional exigido pela distribuidora fora das normas vigentes',
+  ],
+  observacaoPreliminar:
+    'Orçamento preliminar, sujeito a confirmação após a vistoria técnica. O medidor bidirecional é de responsabilidade da distribuidora, conforme a REN 687/2015 da ANEEL.',
+  garantiaDemaisEquipamentos: '1 ano',
+  responsavelTecnico: { nome: '', titulo: '', crea: '' },
 }
 
 export const DEFAULT_CALC: CalcSettings = {
@@ -46,13 +56,26 @@ export const DEFAULT_CALC: CalcSettings = {
 const companyRef = doc(db, 'settings', 'company')
 const calcRef = doc(db, 'settings', 'calc')
 
+/** Documentos salvos antes destes campos existirem (ou com `exclusoes` no formato antigo,
+ * texto único em vez de lista) ficam com os campos ausentes — mescla com o padrão ao ler,
+ * sem tocar no Firestore. Mesmo padrão de `getCalcSettings`. */
+function normalizarCompanySettings(raw: Partial<CompanySettings> & Record<string, unknown>): CompanySettings {
+  const exclusoesBrutas = raw.exclusoes
+  const exclusoes = Array.isArray(exclusoesBrutas)
+    ? exclusoesBrutas
+    : typeof exclusoesBrutas === 'string' && exclusoesBrutas
+      ? [exclusoesBrutas]
+      : DEFAULT_COMPANY.exclusoes
+  return { ...DEFAULT_COMPANY, ...raw, exclusoes } as CompanySettings
+}
+
 export async function getCompanySettings(): Promise<CompanySettings> {
   const snap = await getDoc(companyRef)
   if (!snap.exists()) {
     await setDoc(companyRef, DEFAULT_COMPANY)
     return DEFAULT_COMPANY
   }
-  return snap.data() as CompanySettings
+  return normalizarCompanySettings(snap.data())
 }
 
 export async function getCalcSettings(): Promise<CalcSettings> {
@@ -66,7 +89,7 @@ export async function getCalcSettings(): Promise<CalcSettings> {
 
 export function subscribeCompanySettings(onData: (settings: CompanySettings) => void) {
   return onSnapshot(companyRef, (snap) => {
-    if (snap.exists()) onData(snap.data() as CompanySettings)
+    if (snap.exists()) onData(normalizarCompanySettings(snap.data()))
   })
 }
 
