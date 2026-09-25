@@ -9,14 +9,15 @@ function publicUrl(publicId: string): string {
 }
 
 export async function downloadProposalPdf(proposal: PublicProposal): Promise<void> {
-  const qrCodeDataUrl = await QRCode.toDataURL(publicUrl(proposal.publicId), { margin: 1, width: 160 })
-  const blob = await pdf(<ProposalPdf proposal={proposal} qrCodeDataUrl={qrCodeDataUrl} />).toBlob()
-  const url = URL.createObjectURL(blob)
+  const url = publicUrl(proposal.publicId)
+  const qrCodeDataUrl = await QRCode.toDataURL(url, { margin: 1, width: 160 })
+  const blob = await pdf(<ProposalPdf proposal={proposal} qrCodeDataUrl={qrCodeDataUrl} url={url} />).toBlob()
+  const blobUrl = URL.createObjectURL(blob)
   const a = document.createElement('a')
-  a.href = url
+  a.href = blobUrl
   a.download = `Proposta-${proposal.numero}-v${proposal.versao}.pdf`
   document.body.appendChild(a)
   a.click()
   a.remove()
-  URL.revokeObjectURL(url)
+  URL.revokeObjectURL(blobUrl)
 }
