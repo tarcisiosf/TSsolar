@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { db } from '@/lib/firebase'
 import { SunLogo } from '@/components/ui/SunLogo'
+import { normalizarPublicProposal } from '@/lib/calc/normalizarPublicProposal'
 import type { PublicProposal } from '@/types/firestore'
 import { ProposalView } from './ProposalView'
 
@@ -14,7 +15,7 @@ export function PublicProposalPage() {
   useEffect(() => {
     if (!publicId) return
     getDoc(doc(db, 'publicProposals', publicId)).then((snap) => {
-      setProposal(snap.exists() ? (snap.data() as PublicProposal) : 'not-found')
+      setProposal(snap.exists() ? normalizarPublicProposal(snap.data() as PublicProposal) : 'not-found')
     })
   }, [publicId])
 
