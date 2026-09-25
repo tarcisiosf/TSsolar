@@ -83,7 +83,7 @@ export function toPublicSnapshot(params: ToPublicSnapshotParams): PublicProposal
       contaDepoisMediaMensal: proposal.resultados.contaDepoisMediaMensal,
       percentualEconomiaMensal: proposal.resultados.percentualEconomiaMensal,
       geracaoMensalKwh: proposal.resultados.geracaoMensalKwh,
-      pesoEstimado: proposal.resultados.pesoEstimado,
+      pesoEstimado: proposal.resultados.pesoEstimado ?? { totalKg: 0, kgPorM2: 0, estimativa: true },
     },
     precoFinal,
     condicoesPagamento: proposal.condicoesPagamento,
