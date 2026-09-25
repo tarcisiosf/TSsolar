@@ -35,6 +35,13 @@ const entrada: ProposalEntrada = {
   ligacao: 'mono',
   tipoTelhado: 'ceramico',
   observacoes: '',
+  tipoImovel: '',
+  alturaInstalacao: '',
+  inclinacaoGraus: null,
+  orientacaoTelhado: '',
+  distribuidora: 'Equatorial Goiás',
+  unidadeConsumidora: '',
+  coordenadas: { lat: null, lng: null },
 }
 
 const sistema: ProposalSistema = { potenciaKwp: 4.4, qtdModulos: 8, moduloId: 'mod-1', inversorId: 'inv-1', areaM2: 24 }
