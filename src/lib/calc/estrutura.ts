@@ -43,6 +43,10 @@ export function quantidadeSugeridaEstrutura(
     case 'chapa_aterramento':
     case 'grampo_aterramento':
       return pacotes(n, item.pecasPorPacote)
+    case 'mini_trilho':
+      // Telhado metálico, módulos em retrato numa fileira: um par de mini trilhos em cada junção
+      // entre módulos e nas duas pontas — 2 × (N + 1) peças.
+      return pacotes(2 * (n + 1), item.pecasPorPacote)
     case 'kit_completo':
     case 'outro':
       return null

@@ -32,7 +32,7 @@ export function gerarNomeCatalogItem(input: CatalogItemInput): string {
     case 'modulo':
       return `Módulo ${input.marca} ${input.potenciaWp} Wp${input.tecnologia ? ' ' + input.tecnologia : ''}`.trim()
     case 'inversor':
-      return `Inversor ${input.marca} ${formatDecimalBR(input.potenciaKw)} kW`.trim()
+      return `${input.tipo === 'micro' ? 'Microinversor' : 'Inversor'} ${input.marca} ${formatDecimalBR(input.potenciaKw)} kW`.trim()
     case 'estrutura': {
       const label = TIPO_PECA_ESTRUTURA_LABELS[input.tipoPeca]
       const telhado =

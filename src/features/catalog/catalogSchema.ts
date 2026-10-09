@@ -37,7 +37,7 @@ const estruturaSchema = z.object({
   categoria: z.literal('estrutura'),
   unidade: z.enum(['un', 'pacote', 'barra']),
   marca: z.string(),
-  tipoPeca: z.enum(['perfil', 'suporte_hook', 'grampo_intermediario', 'grampo_terminal', 'emenda_perfil', 'chapa_aterramento', 'grampo_aterramento', 'kit_completo', 'outro']),
+  tipoPeca: z.enum(['perfil', 'suporte_hook', 'grampo_intermediario', 'grampo_terminal', 'emenda_perfil', 'chapa_aterramento', 'grampo_aterramento', 'mini_trilho', 'kit_completo', 'outro']),
   tipoTelhado: z.enum(['ceramico', 'fibrocimento', 'metalico', 'laje', 'solo']).nullable(),
   medida: z.string(),
   formaVenda: z.enum(['unidade', 'pacote', 'barra']),

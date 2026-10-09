@@ -110,7 +110,7 @@ export const BITOLAS_CABO: BitolaCaboMm2[] = [4, 6, 10, 16]
 
 export const TIPOS_PECA_ESTRUTURA: TipoPecaEstrutura[] = [
   'perfil', 'suporte_hook', 'grampo_intermediario', 'grampo_terminal',
-  'emenda_perfil', 'chapa_aterramento', 'grampo_aterramento', 'kit_completo', 'outro',
+  'emenda_perfil', 'chapa_aterramento', 'grampo_aterramento', 'mini_trilho', 'kit_completo', 'outro',
 ]
 
 export const TIPO_PECA_ESTRUTURA_LABELS: Record<TipoPecaEstrutura, string> = {
@@ -121,6 +121,7 @@ export const TIPO_PECA_ESTRUTURA_LABELS: Record<TipoPecaEstrutura, string> = {
   emenda_perfil: 'Emenda de perfil',
   chapa_aterramento: 'Chapa de aterramento',
   grampo_aterramento: 'Grampo de aterramento',
+  mini_trilho: 'Mini trilho',
   kit_completo: 'Kit completo',
   outro: 'Outro',
 }

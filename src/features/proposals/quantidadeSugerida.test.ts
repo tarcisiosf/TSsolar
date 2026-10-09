@@ -65,6 +65,26 @@ describe('quantidadeSugerida', () => {
     expect(quantidadeSugerida(inversor, SISTEMA, [MODULO], CALC)).toBe(1)
   })
 
+  it('microinversor sugere um por grupo de módulos (pelos MPPTs)', () => {
+    const micro: CatalogItem = {
+      id: 'micro1', nome: '', criadoEm: TS, atualizadoEm: TS, categoria: 'inversor', unidade: 'un',
+      marca: 'Growatt', tipo: 'micro', potenciaKw: 2.5, fase: 'mono', monitoramentoWifi: true,
+      garantiaAnos: null, mppts: 4, custoUnitario: 0, ativo: true,
+    }
+    expect(quantidadeSugerida(micro, { ...SISTEMA, qtdModulos: 27 }, [MODULO], CALC)).toBe(7)
+  })
+
+  it('quantidade do kit vale para inversor string e MC4', () => {
+    const inversor: CatalogItem = {
+      id: 'inv2', nome: '', criadoEm: TS, atualizadoEm: TS, categoria: 'inversor', unidade: 'un',
+      marca: 'Sofar', tipo: 'string', potenciaKw: 15, fase: 'tri', monitoramentoWifi: false,
+      garantiaAnos: null, mppts: null, custoUnitario: 0, ativo: true,
+    }
+    const mc4: CatalogItem = { id: 'mc4b', nome: '', criadoEm: TS, atualizadoEm: TS, categoria: 'mc4', unidade: 'par', marca: '', custoUnitario: 0, ativo: true }
+    expect(quantidadeSugerida(inversor, SISTEMA, [MODULO], CALC, 2)).toBe(2)
+    expect(quantidadeSugerida(mc4, SISTEMA, [MODULO], CALC, 56)).toBe(56)
+  })
+
   it('mc4 sugere 4 (2 pares por string + 2 de reserva)', () => {
     const mc4: CatalogItem = { id: 'mc4', nome: '', criadoEm: TS, atualizadoEm: TS, categoria: 'mc4', unidade: 'par', marca: '', custoUnitario: 0, ativo: true }
     expect(quantidadeSugerida(mc4, SISTEMA, [MODULO], CALC)).toBe(4)

@@ -110,7 +110,7 @@ export interface CatalogItemInversor extends CatalogItemBase {
 
 export type TipoPecaEstrutura =
   | 'perfil' | 'suporte_hook' | 'grampo_intermediario' | 'grampo_terminal'
-  | 'emenda_perfil' | 'chapa_aterramento' | 'grampo_aterramento' | 'kit_completo' | 'outro'
+  | 'emenda_perfil' | 'chapa_aterramento' | 'grampo_aterramento' | 'mini_trilho' | 'kit_completo' | 'outro'
 
 export type FormaVendaEstrutura = 'unidade' | 'pacote' | 'barra'
 

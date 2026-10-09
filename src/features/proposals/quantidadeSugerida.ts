@@ -14,9 +14,11 @@ export function quantidadeSugerida(
     case 'modulo':
       return sistema.qtdModulos || 1
     case 'inversor':
-      return 1
+      // Microinversor: um por grupo de módulos (cada MPPT recebe um módulo).
+      if (item.tipo === 'micro' && item.mppts && sistema.qtdModulos > 0) return Math.ceil(sistema.qtdModulos / item.mppts)
+      return quantidadePadraoKit ?? 1
     case 'mc4':
-      return 4
+      return quantidadePadraoKit ?? 4
     case 'cabo':
       if (item.apresentacao === 'rolo' && item.metrosPorRolo) return item.metrosPorRolo
       return quantidadePadraoKit ?? 1
