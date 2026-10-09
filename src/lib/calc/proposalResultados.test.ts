@@ -10,6 +10,7 @@ const calc: CalcSettings = {
   fioBPercentualPorAno: { '2026': 0.6, '2027': 0.75, '2028': 0.9, '2029': 1.0 },
   fatorSimultaneidade: 0.3,
   custoDisponibilidadeKwh: { mono: 30, bi: 50, tri: 100 },
+  taxaMinimaReais: { mono: 36, bi: 60, tri: 120 },
   iluminacaoPublica: 0,
   reajusteConservador: 0.06,
   reajusteOtimista: 0.09,
@@ -69,5 +70,19 @@ describe('calcularResultadosProposta', () => {
     expect(resultados.paybackMesesConservador).not.toBeNull()
     expect(resultados.custoKwhGerado).toBeGreaterThan(0)
     expect(resultados.pesoEstimado).toBeDefined()
+  })
+
+  it('usa a taxa mínima da ligação como conta com o sistema e calcula a economia sobre ela', () => {
+    // Sistema grande o bastante para cobrir todo o consumo: a conta vira só a taxa mínima.
+    const base = { entrada, servicos, precificacao, inversorPotenciaKw: 10, pesoKgModulo: null, calc, anoCalendarioInicial: 2026 }
+    const sistemaGrande = { ...sistema, potenciaKwp: 8 }
+
+    const mono = calcularResultadosProposta({ ...base, sistema: sistemaGrande }).resultados
+    expect(mono.contaDepoisMediaMensal).toBeCloseTo(36, 5)
+    expect(mono.contaAntesMediaMensal).toBeCloseTo(500 * 0.99, 5)
+    expect(mono.percentualEconomiaMensal).toBeCloseTo((500 * 0.99 - 36) / (500 * 0.99), 5)
+
+    const tri = calcularResultadosProposta({ ...base, sistema: sistemaGrande, entrada: { ...entrada, ligacao: 'tri' } }).resultados
+    expect(tri.contaDepoisMediaMensal).toBeCloseTo(120, 5)
   })
 })

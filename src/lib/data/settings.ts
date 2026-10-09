@@ -36,6 +36,10 @@ export const DEFAULT_CALC: CalcSettings = {
   fioBPercentualPorAno: { '2026': 0.6, '2027': 0.75, '2028': 0.9, '2029': 1.0 },
   fatorSimultaneidade: 0.3,
   custoDisponibilidadeKwh: { mono: 30, bi: 50, tri: 100 },
+  // Equatorial Goiás, B1 residencial (REH ANEEL 3.544/2025, vigente desde 22/10/2025):
+  // TUSD R$ 0,568 + TE R$ 0,324 = R$ 0,892/kWh sem tributos ≈ R$ 1,20/kWh com ICMS 19% + PIS/COFINS.
+  // Taxa mínima = 30 / 50 / 100 kWh (REN ANEEL 1.000/2021) × R$ 1,20.
+  taxaMinimaReais: { mono: 36, bi: 60, tri: 120 },
   iluminacaoPublica: 0,
   reajusteConservador: 0.06,
   reajusteOtimista: 0.09,

@@ -1,10 +1,11 @@
-import { Circle, Document, Image, Line, Link, Page, StyleSheet, Svg, Text, View } from '@react-pdf/renderer'
-import { formatBRL, formatDataPorExtenso, formatDateBR, formatKwh, formatKwp, formatNumber, formatPayback, formatPercent } from '@/lib/format'
+import { Document, Image, Link, Page, StyleSheet, Text, View } from '@react-pdf/renderer'
+import { dataDoTimestamp, formatBRL, formatDataPorExtenso, formatDateBR, formatKwh, formatKwp, formatNumber, formatPayback, formatPercent } from '@/lib/format'
 import { unidadeItemExibicao } from '@/features/catalog/catalogDisplay'
 import { ALTURA_LABELS, ORIENTACAO_LABELS, TIPO_IMOVEL_LABELS, TIPO_TELHADO_LABELS } from '@/features/catalog/catalogLabels'
 import type { PublicProposal } from '@/types/firestore'
 import { registrarFontesPdf } from './fonts'
 import { ProposalPdfChart } from './ProposalPdfChart'
+import { marcaDaEmpresa } from '@/components/ui/SunLogo'
 
 registrarFontesPdf()
 
@@ -30,7 +31,7 @@ const styles = StyleSheet.create({
   page: { fontFamily: 'Plus Jakarta Sans', fontSize: 10, color: cores.graphite, backgroundColor: cores.ivory, padding: 32 },
   row: { flexDirection: 'row' },
   spaceBetween: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  brandMark: { width: 20, height: 20, borderRadius: 10 },
+  brandMark: { height: 30, width: 27, objectFit: 'contain' },
   brandName: { fontSize: 13, fontWeight: 800 },
   brandSub: { fontSize: 8, color: cores.muted },
   chip: { borderRadius: 999, paddingVertical: 4, paddingHorizontal: 8, fontSize: 8, fontWeight: 700 },
@@ -44,22 +45,6 @@ const styles = StyleSheet.create({
   itemRow: { flexDirection: 'row', justifyContent: 'space-between', borderBottomWidth: 1, borderBottomColor: cores.line, paddingVertical: 6 },
   footer: { position: 'absolute', bottom: 20, left: 32, right: 32, textAlign: 'center', fontSize: 7, color: cores.muted },
 })
-
-function SunMark() {
-  return (
-    <Svg width={16} height={16} viewBox="0 0 32 32">
-      <Circle cx={16} cy={16} r={7} fill={cores.sun} />
-      {Array.from({ length: 8 }).map((_, i) => {
-        const angle = (i * Math.PI) / 4
-        const x1 = 16 + Math.cos(angle) * 11
-        const y1 = 16 + Math.sin(angle) * 11
-        const x2 = 16 + Math.cos(angle) * 15
-        const y2 = 16 + Math.sin(angle) * 15
-        return <Line key={i} x1={x1} y1={y1} x2={x2} y2={y2} stroke={cores.sun} strokeWidth={2} strokeLinecap="round" />
-      })}
-    </Svg>
-  )
-}
 
 function StatusChip({ status }: { status: 'incluso' | 'fornecido_cliente' | 'nao_incluso' }) {
   const config = {
@@ -104,13 +89,18 @@ function clienteHeaderTexto(proposal: PublicProposal): string | null {
 
 export function ProposalPdf({ proposal, qrCodeDataUrl, url }: { proposal: PublicProposal; qrCodeDataUrl: string; url: string }) {
   const clienteHeader = clienteHeaderTexto(proposal)
+  const opcoesPagamento = [
+    { rotulo: 'À vista', opcao: proposal.pagamento.avista, parcelado: false },
+    { rotulo: 'Cartão', opcao: proposal.pagamento.cartao, parcelado: true },
+    { rotulo: 'Financiamento', opcao: proposal.pagamento.financiamento, parcelado: true },
+  ].filter((o) => o.opcao.exibicao !== 'oculto')
 
   return (
     <Document title={`Proposta ${proposal.numero}`}>
       <Page size="A4" style={styles.page}>
         <View style={styles.spaceBetween}>
           <View style={styles.row}>
-            {proposal.empresa.logoUrl ? <Image src={proposal.empresa.logoUrl} style={styles.brandMark} /> : <SunMark />}
+            <Image src={marcaDaEmpresa(proposal.empresa.logoUrl)} style={styles.brandMark} />
             <View style={{ marginLeft: 8 }}>
               <Text style={styles.brandName}>{proposal.empresa.nome}</Text>
               <Text style={styles.brandSub}>em parceria com {proposal.empresa.parceria.nome}</Text>
@@ -158,7 +148,7 @@ export function ProposalPdf({ proposal, qrCodeDataUrl, url }: { proposal: Public
             </View>
           </View>
           <Text style={[styles.heroText, { fontSize: 7, marginTop: 8 }]}>
-            Mesmo com o sistema, permanece a cobrança da taxa mínima de disponibilidade da rede.
+            Com o sistema, a conta passa a ser a taxa mínima de disponibilidade da Equatorial Goiás. Valores sem a contribuição de iluminação pública, que não muda.
           </Text>
         </View>
 
@@ -216,27 +206,30 @@ export function ProposalPdf({ proposal, qrCodeDataUrl, url }: { proposal: Public
         <View style={styles.card} wrap={false}>
           <Text style={styles.sectionTitle}>Investimento</Text>
           <Text style={{ fontSize: 18, fontWeight: 800 }}>{formatBRL(proposal.precoFinal, false)}</Text>
-          <Text style={{ fontSize: 8, color: cores.muted }}>à vista · {formatNumber(proposal.resultados.precoPorWp, 2)} R$/Wp</Text>
+          <Text style={{ fontSize: 8, color: cores.muted }}>sistema completo instalado · {formatNumber(proposal.resultados.precoPorWp, 2)} R$/Wp</Text>
         </View>
 
-        <View style={styles.card} wrap={false}>
-          <Text style={styles.sectionTitle}>Condições de pagamento</Text>
-          <View style={[styles.row, { marginTop: 4 }]}>
-            <View style={{ flex: 1, marginRight: 8 }}>
-              <Text style={{ fontSize: 8, color: cores.muted }}>À vista</Text>
-              <Text style={{ fontSize: 12, fontWeight: 800 }}>{formatBRL(proposal.precoFinal, false)}</Text>
-            </View>
-            <View style={{ flex: 1, marginRight: 8 }}>
-              <Text style={{ fontSize: 8, color: cores.muted }}>Cartão {proposal.pagamento.cartao.parcelas}x</Text>
-              <Text style={{ fontSize: 12, fontWeight: 800 }}>{formatBRL(proposal.pagamento.cartao.valor)}</Text>
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={{ fontSize: 8, color: cores.muted }}>Financiamento {proposal.pagamento.financiamento.parcelas}x</Text>
-              <Text style={{ fontSize: 12, fontWeight: 800 }}>{formatBRL(proposal.pagamento.financiamento.valor)}</Text>
-            </View>
+        {(opcoesPagamento.length > 0 || !!proposal.condicoesPagamento) && (
+          <View style={styles.card} wrap={false}>
+            <Text style={styles.sectionTitle}>Condições de pagamento</Text>
+            {opcoesPagamento.length > 0 && (
+              <View style={[styles.row, { marginTop: 4 }]}>
+                {opcoesPagamento.map((o, i) => (
+                  <View key={o.rotulo} style={{ flex: 1, marginRight: i < opcoesPagamento.length - 1 ? 8 : 0 }}>
+                    <Text style={{ fontSize: 8, color: cores.muted }}>
+                      {o.rotulo}
+                      {o.opcao.exibicao === 'valor' && o.parcelado ? ` ${o.opcao.parcelas}x` : ''}
+                    </Text>
+                    <Text style={{ fontSize: 12, fontWeight: 800 }}>
+                      {o.opcao.exibicao === 'valor' ? formatBRL(o.opcao.valor, o.parcelado) : 'A combinar'}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            )}
+            {proposal.condicoesPagamento && <Text style={{ fontSize: 8, color: cores.muted, marginTop: 6 }}>{proposal.condicoesPagamento}</Text>}
           </View>
-          {proposal.condicoesPagamento && <Text style={{ fontSize: 8, color: cores.muted, marginTop: 6 }}>{proposal.condicoesPagamento}</Text>}
-        </View>
+        )}
 
         <View style={styles.card} wrap={false}>
           <Text style={styles.sectionTitle}>Incluso e garantias</Text>
@@ -264,7 +257,7 @@ export function ProposalPdf({ proposal, qrCodeDataUrl, url }: { proposal: Public
         <View style={[styles.row, { marginTop: 8, alignItems: 'flex-end' }]} wrap={false}>
           <View style={{ flex: 1 }}>
             <Text style={{ fontSize: 9 }}>
-              {proposal.empresa.cidade.split(',')[0].trim()}, {formatDataPorExtenso(proposal.atualizadoEm.toDate())}
+              {proposal.empresa.cidade.split(',')[0].trim()}, {formatDataPorExtenso(dataDoTimestamp(proposal.atualizadoEm))}
             </Text>
             {proposal.responsavelTecnico.nome && (
               <View style={{ marginTop: 24 }}>

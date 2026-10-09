@@ -33,6 +33,17 @@ export function SunLogo({ size = 28, className = '' }: { size?: number; classNam
   )
 }
 
+/** Logo padrão (public/logo.png, com "Energia Solar"). Para o cabeçalho usamos só a marca (sol + TS). */
+export const LOGO_PADRAO = '/logo.png'
+
+/** Escolhe a imagem da marca: a logo própria da empresa, se trocada nas Configurações, ou a marca
+ * TS Solar — na versão clara para fundos escuros (`tone="dark"`). */
+export function marcaDaEmpresa(logoUrl: string | null | undefined, tone: 'light' | 'dark' = 'light'): string {
+  const personalizada = logoUrl && logoUrl !== LOGO_PADRAO ? logoUrl : null
+  if (personalizada) return personalizada
+  return tone === 'dark' ? '/logo-mark-dark.png' : '/logo-mark.png'
+}
+
 export function BrandLogo({
   logoUrl,
   tone = 'light',
@@ -42,16 +53,12 @@ export function BrandLogo({
   tone?: 'light' | 'dark'
   className?: string
 }) {
-  const textColor = tone === 'dark' ? 'text-ivory' : 'text-graphite'
+  const textColor = tone === 'dark' ? 'text-on-dark' : 'text-graphite'
   const subColor = tone === 'dark' ? 'text-muted-dark' : 'text-muted'
 
   return (
     <div className={`flex items-center gap-2.5 ${className}`}>
-      {logoUrl ? (
-        <img src={logoUrl} alt="TS Solar" className="h-8 w-8 rounded-full object-cover" />
-      ) : (
-        <SunLogo size={28} />
-      )}
+      <img src={marcaDaEmpresa(logoUrl, tone)} alt="TS Solar" className="h-10 w-auto shrink-0 object-contain" />
       <div className="leading-tight">
         <p className={`text-base font-extrabold ${textColor}`}>TS Solar</p>
         <p className={`text-[11px] ${subColor}`}>em parceria com TechSolar</p>

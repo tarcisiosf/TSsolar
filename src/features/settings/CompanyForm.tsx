@@ -62,9 +62,9 @@ export function CompanyForm({ initial }: { initial: CompanySettings }) {
       </div>
 
       <div className="flex items-center gap-4">
-        <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full bg-chip">
+        <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-field bg-white p-1.5">
           {form.logoUrl ? (
-            <img src={form.logoUrl} alt="Logo" className="h-full w-full object-cover" />
+            <img src={form.logoUrl} alt="Logo" className="h-full w-full object-contain" />
           ) : (
             <span className="text-xs text-muted">Sem logo</span>
           )}

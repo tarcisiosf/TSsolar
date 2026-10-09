@@ -8,10 +8,14 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  /* Sol & Grafite — tema claro (padrão) */
+:root,
+[data-theme='light'] {
+  /* Sol & Grafite — tema claro (padrão). `[data-theme='light']` reaplica o claro dentro do painel
+     escuro — usado na prévia da proposta, que é documento comercial e nunca fica escura. */
   --color-graphite: #0f1b2d;
   --color-ivory: #f7f4ee;
+  /* Texto claro sobre fundos grafite — não muda no tema escuro */
+  --color-on-dark: #f7f4ee;
   --color-surface: #ffffff;
   --color-sun: #f2a516;
   --color-sun-soft: #fdf3dc;
@@ -42,6 +46,18 @@
   --color-line: #223550;
   --color-line-soft: #1a2c46;
   --color-chip: #1a2c46;
+  --color-bar-neutral: #3a4b63;
+  /* Fundos "soft" escurecem e as tintas clareiam, para manter contraste */
+  --color-sun-soft: #3a2e14;
+  --color-sun-ink: #f6c65b;
+  --color-success: #4cc38a;
+  --color-success-soft: #123528;
+  --color-danger: #f0937a;
+  --color-danger-soft: #3b1e17;
+  --color-info: #8fb0ff;
+  --color-info-soft: #16264a;
+  --color-neutral-chip: #c9cfd8;
+  --color-neutral-chip-soft: #1f2c3d;
 
   color-scheme: dark;
 }
@@ -64,7 +80,63 @@ body {
 }
 
 [data-theme='dark'] body {
-  color: var(--color-ivory);
+  color: var(--color-on-dark);
+}
+
+/* No tema escuro, "graphite" como cor de texto vira claro. Como fundo (sidebar, hero) continua
+   escuro, e texto sobre o âmbar continua grafite (DESIGN.md: texto sobre sun é sempre graphite). */
+[data-theme='dark'] .text-graphite,
+[data-theme='dark'] input,
+[data-theme='dark'] select,
+[data-theme='dark'] textarea {
+  color: var(--color-on-dark);
+}
+[data-theme='dark'] .border-\[\#D9D3C7\] {
+  border-color: #2b3f5c;
+}
+[data-theme='dark'] .bg-\[\#EDE8DE\] {
+  background-color: var(--color-chip);
+}
+/* Dentro de um bloco claro (prévia da proposta) volta tudo ao normal */
+[data-theme='light'] .text-graphite,
+[data-theme='light'] input,
+[data-theme='light'] select,
+[data-theme='light'] textarea {
+  color: var(--color-graphite);
+}
+[data-theme='light'] .border-\[\#D9D3C7\] {
+  border-color: #d9d3c7;
+}
+[data-theme='dark'] .bg-sun.text-graphite,
+[data-theme='dark'] .bg-sun .text-graphite,
+[data-theme='dark'] .group:hover .group-hover\:text-graphite {
+  color: var(--color-graphite);
+}
+
+/* Skeleton: faixa de luz atravessando (sem piscar o bloco inteiro) */
+.skeleton-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+.skeleton-shimmer::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.55), transparent);
+  animation: skeleton-shimmer 1.4s ease-in-out infinite;
+}
+[data-theme='dark'] .skeleton-shimmer::after {
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.06), transparent);
+}
+@keyframes skeleton-shimmer {
+  to {
+    transform: translateX(100%);
+  }
+}
+
+::selection {
+  background: rgba(242, 165, 22, 0.3);
 }
 
 .tabular-nums {
@@ -72,6 +144,10 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .skeleton-shimmer::after {
+    display: none;
+  }
+
   *,
   *::before,
   *::after {

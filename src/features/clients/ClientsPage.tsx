@@ -2,6 +2,7 @@ import { Plus, Search, Users } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
+import { Stagger, StaggerItem } from '@/components/motion/Motion'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { SkeletonRow } from '@/components/ui/Skeleton'
 import { PageHeader } from '@/components/layout/PageHeader'
@@ -74,15 +75,17 @@ export function ClientsPage() {
         />
       )}
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3">
+      <Stagger className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3" gap={0.03}>
         {filtrados.map((cliente) => (
-          <Card key={cliente.id} onClick={() => abrirEdicao(cliente)} className="cursor-pointer">
+          <StaggerItem key={cliente.id}>
+          <Card onClick={() => abrirEdicao(cliente)} className="cursor-pointer transition-shadow hover:shadow-[0_6px_20px_rgba(15,27,45,0.07)] active:scale-[0.99]">
             <p className="truncate text-sm font-bold text-graphite">{cliente.nome}</p>
             <p className="truncate text-xs text-muted">{cliente.telefone || 'Sem telefone'}</p>
             <p className="truncate text-xs text-muted">{cliente.cidade || 'Sem cidade'}</p>
           </Card>
+          </StaggerItem>
         ))}
-      </div>
+      </Stagger>
 
       <ClientSheet open={sheetAberta} onClose={() => setSheetAberta(false)} client={clienteEditando} />
     </div>

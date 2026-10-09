@@ -54,6 +54,9 @@ export interface CalcSettings {
   fioBPercentualPorAno: Record<string, number>
   fatorSimultaneidade: number
   custoDisponibilidadeKwh: Record<Ligacao, number>
+  /** Taxa mínima (custo de disponibilidade) cobrada pela distribuidora, em R$/mês com impostos.
+   * É o valor de "Com energia solar" na proposta. */
+  taxaMinimaReais: Record<Ligacao, number>
   iluminacaoPublica: number
   reajusteConservador: number
   reajusteOtimista: number
@@ -199,6 +202,8 @@ export interface Client {
   cpfCnpj: string
   cep: string
   criadoEm: Timestamp
+  /** Preenchido quando o cliente vai para a lixeira; `null` = ativo. */
+  excluidoEm: Timestamp | null
 }
 
 export interface ProposalEntrada {
@@ -254,6 +259,27 @@ export interface ProposalPrecificacao {
   precoFinal: number
 }
 
+/** Como cada forma de pagamento aparece na proposta:
+ * - `auto`: calculado pelas taxas/parcelas das Configurações
+ * - `manual`: valor (e parcelas) digitados na proposta
+ * - `combinar`: aparece como "A combinar", sem valor
+ * - `oculto`: não aparece para o cliente */
+export type ModoOpcaoPagamento = 'auto' | 'manual' | 'combinar' | 'oculto'
+
+export interface OpcaoPagamentoConfig {
+  modo: ModoOpcaoPagamento
+  /** Número de parcelas no modo manual (ignorado no à vista). */
+  parcelas: number
+  /** No à vista é o valor total; no cartão/financiamento é o valor da parcela. */
+  valor: number
+}
+
+export interface ProposalPagamentoConfig {
+  avista: OpcaoPagamentoConfig
+  cartao: OpcaoPagamentoConfig
+  financiamento: OpcaoPagamentoConfig
+}
+
 export interface PesoEstimado {
   totalKg: number
   kgPorM2: number
@@ -304,9 +330,12 @@ export interface Proposal {
   servicos: ProposalServicos
   precificacao: ProposalPrecificacao
   condicoesPagamento: string
+  pagamento: ProposalPagamentoConfig
   resultados: ProposalResultados | null
   publicId: string
   historicoVersoes: ProposalVersaoHistorico[]
+  /** Preenchido quando a proposta vai para a lixeira; `null` = ativa. */
+  excluidoEm: Timestamp | null
 }
 
 export interface PublicProposalEmpresa {
@@ -329,9 +358,18 @@ export interface PublicProposalCliente {
   cidade: string
 }
 
+export type ExibicaoPagamento = 'valor' | 'combinar' | 'oculto'
+
+export interface PublicOpcaoPagamento {
+  exibicao: ExibicaoPagamento
+  parcelas: number
+  valor: number
+}
+
 export interface PublicProposalPagamento {
-  cartao: { parcelas: number; valor: number }
-  financiamento: { parcelas: number; valor: number }
+  avista: PublicOpcaoPagamento
+  cartao: PublicOpcaoPagamento
+  financiamento: PublicOpcaoPagamento
 }
 
 export type PublicProposalResultados = Omit<ProposalResultados, 'custoTotal' | 'lucroEstimado' | 'margemResultante'>
@@ -376,6 +414,8 @@ export interface PublicProposal {
   exclusoes: string[]
   observacaoPreliminar: string
   responsavelTecnico: CompanySettings['responsavelTecnico']
+  /** `true` enquanto a proposta está na lixeira — o link público mostra "não encontrada". */
+  arquivada?: boolean
 }
 
 // Fase 2 — modelado agora, implementado depois

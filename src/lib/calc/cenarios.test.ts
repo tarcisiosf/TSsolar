@@ -8,13 +8,8 @@ const baseParams: CenarioParams = {
   produtividadeKwhKwpAno: 1400,
   distribuicaoMensal: [1.042, 1.052, 0.974, 0.954, 0.9, 0.867, 0.906, 1.081, 1.061, 1.067, 1.026, 1.048],
   tarifaKwh: 0.99,
-  fioBKwh: 0.28,
-  fioBPercentualPorAno: { '2026': 0.6, '2027': 0.75, '2028': 0.9, '2029': 1.0 },
-  anoCalendarioInicial: 2026,
-  fatorSimultaneidade: 0.3,
   ligacao: 'mono',
-  custoDisponibilidadeKwh: { mono: 30, bi: 50, tri: 100 },
-  iluminacaoPublica: 0,
+  taxaMinimaReais: { mono: 36, bi: 60, tri: 120 },
   reajusteAnual: 0.06,
   degradacaoAnual: 0.005,
   horizonteAnos: 25,
@@ -44,6 +39,19 @@ describe('calcularCenario', () => {
     const conservador = calcularCenario({ ...baseParams, reajusteAnual: 0.06 })
     const otimista = calcularCenario({ ...baseParams, reajusteAnual: 0.09 })
     expect(otimista.economiaAcumulada25Anos).toBeGreaterThan(conservador.economiaAcumulada25Anos)
+  })
+})
+
+describe('calcularCenario — taxa mínima', () => {
+  it('no ano 1, com o sistema cobrindo o consumo, a economia mensal é a conta menos a taxa mínima', () => {
+    const resultado = calcularCenario({ ...baseParams, potenciaKwp: 8 })
+    expect(resultado.economiaAno1).toBeCloseTo(12 * (500 * 0.99 - 36), 5)
+  })
+
+  it('ligação trifásica (taxa mínima maior) economiza menos que a monofásica', () => {
+    const mono = calcularCenario({ ...baseParams, potenciaKwp: 8 })
+    const tri = calcularCenario({ ...baseParams, potenciaKwp: 8, ligacao: 'tri' })
+    expect(tri.economiaAno1).toBeCloseTo(mono.economiaAno1 - 12 * (120 - 36), 5)
   })
 })
 

@@ -1,8 +1,10 @@
+import { Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import { Button } from '@/components/ui/Button'
+import { useToast } from '@/components/ui/Toast'
 import { Input } from '@/components/ui/Input'
 import { Sheet } from '@/components/ui/Sheet'
-import { createClient, updateClient, type ClientInput } from '@/lib/data/clients'
+import { createClient, moverClienteParaLixeira, restaurarCliente, updateClient, type ClientInput } from '@/lib/data/clients'
 import { maskCpfCnpj, isValidCpfCnpj } from '@/lib/cpfCnpj'
 import { onlyDigits } from '@/lib/format'
 import type { Client } from '@/types/firestore'
@@ -27,6 +29,7 @@ export function ClientSheet({
   const [form, setForm] = useState<ClientInput>(client ?? VAZIO)
   const [salvando, setSalvando] = useState(false)
   const [dirty, setDirty] = useState(false)
+  const mostrarToast = useToast()
 
   function set<K extends keyof ClientInput>(key: K, value: ClientInput[K]) {
     setForm((f) => ({ ...f, [key]: value }))
@@ -37,6 +40,23 @@ export function ClientSheet({
     setForm(client ?? VAZIO)
     setDirty(false)
     onClose()
+  }
+
+  async function moverParaLixeira() {
+    if (!client) return
+    try {
+      await moverClienteParaLixeira(client.id)
+    } catch (e) {
+      console.error(e)
+      alert('Não foi possível apagar agora. Tente de novo.')
+      return
+    }
+    setDirty(false)
+    onClose()
+    mostrarToast({
+      mensagem: `${client.nome} foi para a lixeira`,
+      acao: { rotulo: 'Desfazer', onClick: () => restaurarCliente(client.id) },
+    })
   }
 
   async function handleSalvar() {
@@ -66,6 +86,16 @@ export function ClientSheet({
       title={client ? 'Editar cliente' : 'Novo cliente'}
       isDirty={dirty}
       footer={
+        <div className="flex flex-col gap-3">
+        {client && (
+          <button
+            type="button"
+            onClick={moverParaLixeira}
+            className="flex cursor-pointer items-center justify-center gap-1.5 self-center rounded-pill px-3 py-1.5 text-xs font-bold text-muted transition-colors hover:bg-danger-soft hover:text-danger"
+          >
+            <Trash2 className="h-3.5 w-3.5" aria-hidden /> Apagar cliente
+          </button>
+        )}
         <div className="flex gap-3">
           <Button type="button" variant="secondary" onClick={handleClose} className="flex-1">
             Cancelar
@@ -73,6 +103,7 @@ export function ClientSheet({
           <Button type="button" variant="primary" onClick={handleSalvar} loading={salvando} className="flex-1">
             {client ? 'Salvar alterações' : 'Adicionar cliente'}
           </Button>
+        </div>
         </div>
       }
     >
@@ -106,6 +137,7 @@ export function ClientSheet({
           />
         </div>
       </div>
+
     </Sheet>
   )
 }

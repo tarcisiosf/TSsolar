@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  dataDoTimestamp,
   formatDataPorExtenso,
   formatDecimalBR,
   formatPayback,
@@ -45,5 +46,17 @@ describe('formatPayback', () => {
 describe('formatDataPorExtenso', () => {
   it('formata a data por extenso em português', () => {
     expect(formatDataPorExtenso(new Date(2026, 8, 23))).toBe('23 de setembro de 2026')
+  })
+})
+
+describe('dataDoTimestamp', () => {
+  it('converte um Timestamp em Date', () => {
+    const data = new Date(2026, 9, 6)
+    expect(dataDoTimestamp({ toDate: () => data })).toBe(data)
+  })
+
+  it('não quebra quando o campo ainda é null (serverTimestamp pendente)', () => {
+    expect(dataDoTimestamp(null)).toBeInstanceOf(Date)
+    expect(dataDoTimestamp(undefined)).toBeInstanceOf(Date)
   })
 })

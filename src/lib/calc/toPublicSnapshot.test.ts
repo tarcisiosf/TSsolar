@@ -56,6 +56,11 @@ function buildProposal(): Proposal {
     servicos: { materiais: 0, projeto: 300, instalacao: 1800, art: 150, frete: 200, homologacao: 250, outros: [] },
     precificacao: { modo: 'margem', margem: MARGEM_SENTINELA, comissao: COMISSAO_SENTINELA, precoFinal: PRECO_FINAL },
     condicoesPagamento: 'A combinar',
+    pagamento: {
+      avista: { modo: 'auto', parcelas: 1, valor: 0 },
+      cartao: { modo: 'auto', parcelas: 12, valor: 0 },
+      financiamento: { modo: 'auto', parcelas: 60, valor: 0 },
+    },
     resultados: {
       custoTotal: CUSTO_UNITARIO_SENTINELA * 8,
       lucroEstimado: 12345.67,
@@ -78,6 +83,7 @@ function buildProposal(): Proposal {
     },
     publicId: 'public-abc-123',
     historicoVersoes: [],
+    excluidoEm: null,
   }
 }
 
@@ -114,6 +120,7 @@ function buildClient(): Client {
     cpfCnpj: '111.444.777-35',
     cep: '74000-000',
     criadoEm: Timestamp.now(),
+    excluidoEm: null,
   }
 }
 
@@ -174,6 +181,7 @@ describe('toPublicSnapshot — regra de ouro (allowlist)', () => {
     expect(snapshot.empresa.parceria.nome).toBe('TechSolar')
     expect(snapshot.cliente.cpfCnpj).toBe('111.444.777-35')
 
+    expect(snapshot.pagamento.avista).toEqual({ exibicao: 'valor', parcelas: 1, valor: PRECO_FINAL })
     expect(snapshot.pagamento.cartao.parcelas).toBe(parcelasCartao)
     expect(snapshot.pagamento.cartao.valor).toBeCloseTo(calcularPMT(PRECO_FINAL, taxaCartaoMensal, parcelasCartao))
     expect(snapshot.pagamento.financiamento.parcelas).toBe(parcelasFinanciamento)

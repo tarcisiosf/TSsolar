@@ -10,11 +10,13 @@ import {
   setDoc,
   Timestamp,
   updateDoc,
+  writeBatch,
   type DocumentData,
 } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
 import { calcularResultadosProposta } from '@/lib/calc/proposalResultados'
 import { toPublicSnapshot } from '@/lib/calc/toPublicSnapshot'
+import { normalizarPagamentoConfig, PAGAMENTO_CONFIG_PADRAO } from '@/lib/calc/pagamento'
 import type { Client, Proposal, ProposalItem, ProposalServicos, StatusProposta } from '@/types/firestore'
 import { getClient } from './clients'
 import { getCalcSettings, getCompanySettings, proximoNumeroProposta } from './settings'
@@ -73,10 +75,12 @@ export function criarPropostaVazia(id: string, client: Pick<Client, 'id' | 'nome
     itens: [],
     servicos: SERVICOS_VAZIOS,
     precificacao: { modo: 'margem', margem: 0.25, comissao: 0, precoFinal: 0 },
-    condicoesPagamento: 'A combinar',
+    condicoesPagamento: '',
+    pagamento: PAGAMENTO_CONFIG_PADRAO,
     resultados: null,
     publicId: crypto.randomUUID(),
     historicoVersoes: [],
+    excluidoEm: null,
   }
 }
 
@@ -99,6 +103,8 @@ function normalizarProposal(raw: Proposal): Proposal {
     servicos: { ...SERVICOS_VAZIOS, ...raw.servicos },
     entrada: { ...ENTRADA_VAZIA_NOVOS_CAMPOS, ...raw.entrada },
     condicoesPagamento: raw.condicoesPagamento ?? 'A combinar',
+    pagamento: normalizarPagamentoConfig(raw.pagamento),
+    excluidoEm: raw.excluidoEm ?? null,
   }
 }
 
@@ -106,16 +112,28 @@ export async function createProposal(proposal: Proposal): Promise<void> {
   await setDoc(doc(db, 'proposals', proposal.id), { ...proposal, criadoEm: serverTimestamp(), atualizadoEm: serverTimestamp() })
 }
 
-export function subscribeProposals(onData: (propostas: Proposal[]) => void) {
+function assinarPropostas(onData: (propostas: Proposal[]) => void, naLixeira: boolean) {
   const q = query(proposalsCollection, orderBy('criadoEm', 'desc'))
   return onSnapshot(q, (snap) => {
-    onData(snap.docs.map((d) => normalizarProposal({ id: d.id, ...d.data() } as Proposal)))
+    const todas = snap.docs.map((d) => normalizarProposal({ id: d.id, ...d.data({ serverTimestamps: 'estimate' }) } as Proposal))
+    // Filtra no cliente: documentos antigos não têm o campo `excluidoEm`, e um `where` o exigiria.
+    onData(todas.filter((p) => (p.excluidoEm != null) === naLixeira))
   })
+}
+
+/** Propostas ativas (fora da lixeira). */
+export function subscribeProposals(onData: (propostas: Proposal[]) => void) {
+  return assinarPropostas(onData, false)
+}
+
+/** Propostas na lixeira, mais recentes primeiro. */
+export function subscribeLixeiraPropostas(onData: (propostas: Proposal[]) => void) {
+  return assinarPropostas((ps) => onData([...ps].sort((a, b) => (b.excluidoEm?.toMillis() ?? 0) - (a.excluidoEm?.toMillis() ?? 0))), true)
 }
 
 export function subscribeProposal(id: string, onData: (proposal: Proposal | null) => void) {
   return onSnapshot(doc(db, 'proposals', id), (snap) => {
-    onData(snap.exists() ? normalizarProposal({ id: snap.id, ...snap.data() } as Proposal) : null)
+    onData(snap.exists() ? normalizarProposal({ id: snap.id, ...snap.data({ serverTimestamps: 'estimate' }) } as Proposal) : null)
   })
 }
 
@@ -204,7 +222,12 @@ export async function publicarProposta(id: string, inversorPotenciaKw: number, p
     parcelasFinanciamento: calc.parcelasFinanciamento,
   })
 
-  await setDoc(doc(publicProposalsCollection, proposal.publicId), { ...publicSnapshot, atualizadoEm: serverTimestamp() })
+  await setDoc(doc(publicProposalsCollection, proposal.publicId), {
+    ...publicSnapshot,
+    atualizadoEm: serverTimestamp(),
+    // Republicar uma proposta que está na lixeira não deve reativar o link do cliente.
+    arquivada: proposal.excluidoEm != null,
+  })
 
   return { numero, versao, publicId: proposal.publicId }
 }
@@ -224,6 +247,7 @@ export async function duplicateProposal(id: string): Promise<string> {
     validaAte: null,
     historicoVersoes: [],
     publicId: crypto.randomUUID(),
+    excluidoEm: null,
     itens: original.itens.map((item) => ({ ...item, id: novoItemId() })),
   }
   await createProposal(novaProposta)
@@ -241,4 +265,28 @@ export function itemVazio(): ProposalItem {
     custoUnitario: 0,
     status: 'incluso',
   }
+}
+
+/** Move para a lixeira: some das listas e o link público passa a mostrar "não encontrada".
+ * Pode ser desfeito com `restaurarProposta`. */
+export async function moverPropostaParaLixeira(proposal: Pick<Proposal, 'id' | 'publicId' | 'numero'>): Promise<void> {
+  const batch = writeBatch(db)
+  batch.update(doc(db, 'proposals', proposal.id), { excluidoEm: serverTimestamp() })
+  if (proposal.numero && proposal.publicId) batch.set(doc(publicProposalsCollection, proposal.publicId), { arquivada: true }, { merge: true })
+  await batch.commit()
+}
+
+export async function restaurarProposta(proposal: Pick<Proposal, 'id' | 'publicId' | 'numero'>): Promise<void> {
+  const batch = writeBatch(db)
+  batch.update(doc(db, 'proposals', proposal.id), { excluidoEm: null })
+  if (proposal.numero && proposal.publicId) batch.set(doc(publicProposalsCollection, proposal.publicId), { arquivada: false }, { merge: true })
+  await batch.commit()
+}
+
+/** Apaga para sempre a proposta e o link público dela. Não tem volta — usado só na lixeira. */
+export async function excluirProposta(proposal: Pick<Proposal, 'id' | 'publicId'>): Promise<void> {
+  const batch = writeBatch(db)
+  batch.delete(doc(db, 'proposals', proposal.id))
+  if (proposal.publicId) batch.delete(doc(publicProposalsCollection, proposal.publicId))
+  await batch.commit()
 }

@@ -14,7 +14,7 @@ interface ButtonProps extends Omit<HTMLMotionProps<'button'>, 'ref' | 'children'
 const variantClasses: Record<Variant, string> = {
   primary: 'bg-sun text-graphite',
   secondary: 'bg-surface text-graphite border border-[#D9D3C7]',
-  dark: 'bg-graphite text-ivory',
+  dark: 'bg-graphite text-on-dark',
 }
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(

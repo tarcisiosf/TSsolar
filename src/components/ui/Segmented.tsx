@@ -22,7 +22,7 @@ export function Segmented<T extends string>({ options, value, onChange, size = '
     <div
       role="radiogroup"
       aria-label={props['aria-label']}
-      className="inline-flex rounded-pill bg-[#EDE8DE] p-1 gap-1"
+      className="inline-flex rounded-pill bg-[#EDE8DE] p-1 gap-1 dark:bg-chip"
     >
       {options.map((option) => {
         const active = option.value === value
@@ -33,7 +33,7 @@ export function Segmented<T extends string>({ options, value, onChange, size = '
             role="radio"
             aria-checked={active}
             onClick={() => onChange(option.value)}
-            className={`relative rounded-pill font-bold transition-colors
+            className={`relative cursor-pointer whitespace-nowrap rounded-pill font-bold transition-colors
               ${size === 'sm' ? 'px-3 py-1.5 text-xs' : 'px-4 py-2 text-sm'}
               ${active ? 'text-graphite' : 'text-muted hover:text-graphite'}
               focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sun`}
@@ -41,7 +41,7 @@ export function Segmented<T extends string>({ options, value, onChange, size = '
             {active && (
               <motion.span
                 layoutId={`segmented-${layoutId}`}
-                className="absolute inset-0 rounded-pill bg-white shadow-segment"
+                className="absolute inset-0 rounded-pill bg-white shadow-segment dark:bg-surface"
                 transition={shouldReduceMotion ? { duration: 0.15 } : { type: 'spring', bounce: 0, duration: 0.35 }}
               />
             )}

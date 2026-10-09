@@ -1,5 +1,5 @@
 import type { Ligacao } from '@/types/firestore'
-import { calcularContaComSistemaMes, calcularContaSemSistemaMes, percentualFioBPorAno } from './contaComSistema'
+import { calcularContaSemSistemaMes } from './contaComSistema'
 import { gerarGeracaoMensal } from './geracao'
 import type { CenarioResultado } from './types'
 
@@ -9,39 +9,25 @@ export interface CenarioParams {
   produtividadeKwhKwpAno: number
   distribuicaoMensal: number[]
   tarifaKwh: number
-  fioBKwh: number
-  fioBPercentualPorAno: Record<string, number>
-  anoCalendarioInicial: number
-  fatorSimultaneidade: number
   ligacao: Ligacao
-  custoDisponibilidadeKwh: Record<Ligacao, number>
-  iluminacaoPublica: number
+  /** Taxa mínima da distribuidora (R$/mês com impostos) por tipo de ligação, no ano 1. */
+  taxaMinimaReais: Record<Ligacao, number>
   reajusteAnual: number
   degradacaoAnual: number
   horizonteAnos: number
   precoFinal: number
 }
 
-/** Calcula economia, payback e fluxo de caixa de um cenário (conservador ou otimista). */
+/**
+ * Calcula economia, payback e fluxo de caixa de um cenário (conservador ou otimista).
+ *
+ * Mesmo modelo da manchete da proposta: com o sistema, a conta do mês passa a ser a taxa mínima
+ * da distribuidora mais o consumo que a geração não cobrir. Tarifa e taxa mínima sobem juntas
+ * pelo reajuste anual do cenário. A iluminação pública fica de fora dos dois lados (não muda).
+ */
 export function calcularCenario(params: CenarioParams): CenarioResultado {
-  const {
-    consumoMensalKwh,
-    potenciaKwp,
-    produtividadeKwhKwpAno,
-    distribuicaoMensal,
-    tarifaKwh,
-    fioBKwh,
-    fioBPercentualPorAno,
-    anoCalendarioInicial,
-    fatorSimultaneidade,
-    ligacao,
-    custoDisponibilidadeKwh,
-    iluminacaoPublica,
-    reajusteAnual,
-    degradacaoAnual,
-    horizonteAnos,
-    precoFinal,
-  } = params
+  const { consumoMensalKwh, potenciaKwp, produtividadeKwhKwpAno, distribuicaoMensal, tarifaKwh, ligacao, taxaMinimaReais, reajusteAnual, degradacaoAnual, horizonteAnos, precoFinal } =
+    params
 
   const fluxoCaixaAnual: number[] = []
   const economiaMensalAcumulada: number[] = []
@@ -51,26 +37,14 @@ export function calcularCenario(params: CenarioParams): CenarioResultado {
   for (let ano = 1; ano <= horizonteAnos; ano++) {
     const reajuste = Math.pow(1 + reajusteAnual, ano - 1)
     const tarifaAno = tarifaKwh * reajuste
-    const fioBAno = fioBKwh * reajuste
-    const anoCalendario = anoCalendarioInicial + ano - 1
-    const percentualFioB = percentualFioBPorAno(anoCalendario, fioBPercentualPorAno)
+    const taxaMinimaAno = (taxaMinimaReais[ligacao] ?? 0) * reajuste
     const geracaoMensal = gerarGeracaoMensal(potenciaKwp, produtividadeKwhKwpAno, distribuicaoMensal, ano, degradacaoAnual)
 
     let economiaAno = 0
     for (let mes = 0; mes < 12; mes++) {
       const consumoMes = consumoMensalKwh[mes] ?? 0
-      const contaSemSistema = calcularContaSemSistemaMes(consumoMes, tarifaAno, iluminacaoPublica)
-      const contaComSistema = calcularContaComSistemaMes({
-        consumoKwh: consumoMes,
-        geracaoKwh: geracaoMensal[mes],
-        tarifaKwh: tarifaAno,
-        fioBKwh: fioBAno,
-        percentualFioB,
-        fatorSimultaneidade,
-        ligacao,
-        custoDisponibilidadeKwh,
-        iluminacaoPublica,
-      })
+      const contaSemSistema = calcularContaSemSistemaMes(consumoMes, tarifaAno, 0)
+      const contaComSistema = taxaMinimaAno + Math.max(consumoMes - geracaoMensal[mes], 0) * tarifaAno
       const economiaMes = contaSemSistema - contaComSistema
       economiaAno += economiaMes
       acumulado += economiaMes

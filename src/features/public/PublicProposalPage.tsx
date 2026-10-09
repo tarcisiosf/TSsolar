@@ -15,16 +15,21 @@ export function PublicProposalPage() {
   useEffect(() => {
     if (!publicId) return
     getDoc(doc(db, 'publicProposals', publicId)).then((snap) => {
-      setProposal(snap.exists() ? normalizarPublicProposal(snap.data() as PublicProposal) : 'not-found')
+      const dados = snap.exists() ? (snap.data() as PublicProposal) : null
+      // Proposta na lixeira: para o cliente, é como se o link não existisse.
+      setProposal(dados && !dados.arquivada && dados.numero ? normalizarPublicProposal(dados) : 'not-found')
     })
   }, [publicId])
 
   async function handleBaixarPdf() {
-    if (!proposal || proposal === 'not-found') return
+    if (!proposal || proposal === 'not-found' || baixandoPdf) return
     setBaixandoPdf(true)
     try {
       const { downloadProposalPdf } = await import('@/features/pdf/downloadProposalPdf')
       await downloadProposalPdf(proposal)
+    } catch (e) {
+      console.error(e)
+      alert('Não foi possível gerar o PDF agora. Tente novamente em instantes.')
     } finally {
       setBaixandoPdf(false)
     }
@@ -48,5 +53,5 @@ export function PublicProposalPage() {
     )
   }
 
-  return <ProposalView proposal={proposal} onBaixarPdf={baixandoPdf ? undefined : handleBaixarPdf} />
+  return <ProposalView proposal={proposal} onBaixarPdf={handleBaixarPdf} baixandoPdf={baixandoPdf} />
 }

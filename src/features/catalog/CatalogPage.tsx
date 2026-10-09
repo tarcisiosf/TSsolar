@@ -2,6 +2,7 @@ import { Package, Plus, Search } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
+import { Stagger, StaggerItem } from '@/components/motion/Motion'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { Segmented } from '@/components/ui/Segmented'
 import { Select } from '@/components/ui/Select'
@@ -146,9 +147,10 @@ export function CatalogPage() {
             </div>
           )}
 
-          <div className="flex flex-col gap-3 md:hidden">
+          <Stagger className="flex flex-col gap-3 md:hidden" gap={0.03}>
             {filtrados.map((item) => (
-              <Card key={item.id} onClick={() => abrirEdicao(item)} className="cursor-pointer">
+              <StaggerItem key={item.id}>
+              <Card onClick={() => abrirEdicao(item)} className="cursor-pointer active:scale-[0.99]">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <p className="truncate text-sm font-bold text-graphite">{item.nome}</p>
@@ -161,8 +163,9 @@ export function CatalogPage() {
                   {item.custoUnitario === 0 && <span className="rounded-pill bg-sun-soft px-2 py-0.5 text-[11px] font-bold text-sun-ink">Preencha o custo</span>}
                 </div>
               </Card>
+              </StaggerItem>
             ))}
-          </div>
+          </Stagger>
 
           <CatalogItemSheet open={sheetAberta} onClose={() => setSheetAberta(false)} item={itemEditando} />
         </>

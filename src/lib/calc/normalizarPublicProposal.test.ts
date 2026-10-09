@@ -110,7 +110,11 @@ function buildNewFormatRaw(): PublicProposal {
     },
     precoFinal: 25000,
     condicoesPagamento: 'A combinar',
-    pagamento: { cartao: { parcelas: 12, valor: 2200 }, financiamento: { parcelas: 60, valor: 550 } },
+    pagamento: {
+      avista: { exibicao: 'valor', parcelas: 1, valor: 24000 },
+      cartao: { exibicao: 'valor', parcelas: 12, valor: 2200 },
+      financiamento: { exibicao: 'combinar', parcelas: 0, valor: 0 },
+    },
     empresa: {
       nome: 'TS Solar',
       parceria: { nome: 'TechSolar', cnpj: '33.146.037/0001-81' },
@@ -139,7 +143,8 @@ describe('normalizarPublicProposal', () => {
     expect(result.exclusoes).toEqual(['Não inclui reforço de padrão de entrada.'])
     expect(result.cliente.cpfCnpj).toBe('')
     expect(result.resultados.pesoEstimado.totalKg).toBe(0)
-    expect(result.pagamento.cartao.parcelas).toBe(0)
+    expect(result.pagamento.cartao.exibicao).toBe('combinar')
+    expect(result.pagamento.avista).toEqual({ exibicao: 'valor', parcelas: 1, valor: 25000 })
     expect(result.responsavelTecnico.nome).toBe('')
   })
 
@@ -150,5 +155,6 @@ describe('normalizarPublicProposal', () => {
     expect(result.exclusoes).toEqual(raw.exclusoes)
     expect(result.exclusoes).toBe(raw.exclusoes)
     expect(result.cliente).toEqual(raw.cliente)
+    expect(result.pagamento).toEqual(raw.pagamento)
   })
 })

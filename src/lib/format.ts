@@ -66,3 +66,9 @@ export function formatPayback(meses: number | null): string {
 export function formatDataPorExtenso(data: Date): string {
   return formatDate(data, "d 'de' MMMM 'de' yyyy", { locale: ptBR })
 }
+
+/** Converte um Timestamp do Firestore em Date sem quebrar quando ele ainda não existe —
+ * logo após uma gravação com `serverTimestamp()` o campo chega `null` até o servidor confirmar. */
+export function dataDoTimestamp(ts: { toDate: () => Date } | null | undefined): Date {
+  return ts && typeof ts.toDate === 'function' ? ts.toDate() : new Date()
+}

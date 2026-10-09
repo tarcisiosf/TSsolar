@@ -13,6 +13,7 @@ const CALC: CalcSettings = {
   fioBPercentualPorAno: {},
   fatorSimultaneidade: 0.3,
   custoDisponibilidadeKwh: { mono: 30, bi: 50, tri: 100 },
+  taxaMinimaReais: { mono: 36, bi: 60, tri: 120 },
   iluminacaoPublica: 0,
   reajusteConservador: 0.06,
   reajusteOtimista: 0.09,

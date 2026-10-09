@@ -24,10 +24,6 @@ export function CalcForm({ initial }: { initial: CalcSettings }) {
     set('distribuicaoMensal', nova)
   }
 
-  function setFioBAno(ano: string, percentual: number) {
-    set('fioBPercentualPorAno', { ...form.fioBPercentualPorAno, [ano]: percentual })
-  }
-
   async function handleSalvar() {
     setStatus('saving')
     try {
@@ -83,40 +79,18 @@ export function CalcForm({ initial }: { initial: CalcSettings }) {
       </section>
 
       <section>
-        <h3 className="mb-3 text-sm font-bold uppercase tracking-wide text-muted">Tarifa e Fio B</h3>
+        <h3 className="mb-3 text-sm font-bold uppercase tracking-wide text-muted">Tarifa e conta com o sistema</h3>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <MoneyInput label="Tarifa padrão" value={form.tarifaKwh} onChange={(v) => set('tarifaKwh', v)} hint="R$/kWh, editável por proposta" />
-          <MoneyInput label="Fio B" value={form.fioBKwh} onChange={(v) => set('fioBKwh', v)} hint="R$/kWh" />
-          <PercentField label="Fator de simultaneidade" value={form.fatorSimultaneidade} onChange={(v) => set('fatorSimultaneidade', v)} />
+          <MoneyInput label="Tarifa padrão" value={form.tarifaKwh} onChange={(v) => set('tarifaKwh', v)} hint="R$/kWh com impostos, editável por proposta" />
         </div>
-        <p className="mb-2 mt-4 text-xs font-semibold text-graphite">Percentual do Fio B cobrado, por ano</p>
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          {Object.entries(form.fioBPercentualPorAno)
-            .sort(([a], [b]) => Number(a) - Number(b))
-            .map(([ano, percentual]) => (
-              <PercentField key={ano} label={ano} value={percentual} onChange={(v) => setFioBAno(ano, v)} />
-            ))}
-        </div>
-        <p className="mb-2 mt-4 text-xs font-semibold text-graphite">Custo de disponibilidade</p>
+        <p className="mb-1 mt-4 text-xs font-semibold text-graphite">Taxa mínima da conta (R$/mês, com impostos)</p>
+        <p className="mb-2 text-xs text-muted">
+          É a conta do cliente depois do sistema — usada na manchete, na economia e nos cenários de 25 anos. Padrão: Equatorial Goiás, R$ 0,892/kWh sem impostos (≈ R$ 1,20 com ICMS e PIS/COFINS) × 30, 50 ou 100 kWh.
+        </p>
         <div className="grid grid-cols-3 gap-3">
-          <MoneyInput
-            label="Monofásico"
-            value={form.custoDisponibilidadeKwh.mono}
-            onChange={(v) => set('custoDisponibilidadeKwh', { ...form.custoDisponibilidadeKwh, mono: v })}
-          />
-          <MoneyInput
-            label="Bifásico"
-            value={form.custoDisponibilidadeKwh.bi}
-            onChange={(v) => set('custoDisponibilidadeKwh', { ...form.custoDisponibilidadeKwh, bi: v })}
-          />
-          <MoneyInput
-            label="Trifásico"
-            value={form.custoDisponibilidadeKwh.tri}
-            onChange={(v) => set('custoDisponibilidadeKwh', { ...form.custoDisponibilidadeKwh, tri: v })}
-          />
-        </div>
-        <div className="mt-4">
-          <MoneyInput label="Iluminação pública" value={form.iluminacaoPublica} onChange={(v) => set('iluminacaoPublica', v)} hint="R$/mês, opcional" />
+          <MoneyInput label="Monofásico" value={form.taxaMinimaReais.mono} onChange={(v) => set('taxaMinimaReais', { ...form.taxaMinimaReais, mono: v })} />
+          <MoneyInput label="Bifásico" value={form.taxaMinimaReais.bi} onChange={(v) => set('taxaMinimaReais', { ...form.taxaMinimaReais, bi: v })} />
+          <MoneyInput label="Trifásico" value={form.taxaMinimaReais.tri} onChange={(v) => set('taxaMinimaReais', { ...form.taxaMinimaReais, tri: v })} />
         </div>
       </section>
 

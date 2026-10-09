@@ -1,4 +1,4 @@
-import { FileText, LayoutDashboard, Package, Receipt, Settings, Users, Wallet } from 'lucide-react'
+import { FileText, LayoutDashboard, Package, Receipt, Settings, Trash2, Users, Wallet } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 
 export interface NavItem {
@@ -14,6 +14,7 @@ export const navItems: NavItem[] = [
   { to: '/app/clientes', label: 'Clientes', icon: Users },
   { to: '/app/catalogo', label: 'Catálogo', icon: Package },
   { to: '/app/configuracoes', label: 'Configurações', icon: Settings },
+  { to: '/app/lixeira', label: 'Lixeira', icon: Trash2 },
   { to: '/app/financeiro', label: 'Financeiro', icon: Wallet, emBreve: true },
   { to: '/app/custos-fixos', label: 'Custos fixos', icon: Receipt, emBreve: true },
 ]

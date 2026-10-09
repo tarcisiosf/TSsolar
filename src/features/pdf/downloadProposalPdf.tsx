@@ -19,5 +19,6 @@ export async function downloadProposalPdf(proposal: PublicProposal): Promise<voi
   document.body.appendChild(a)
   a.click()
   a.remove()
-  URL.revokeObjectURL(blobUrl)
+  // Revogar na hora pode cancelar o download em alguns navegadores (Safari/iOS).
+  setTimeout(() => URL.revokeObjectURL(blobUrl), 60_000)
 }

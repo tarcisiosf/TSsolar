@@ -1,4 +1,4 @@
-import { simularPagamento } from './pagamento'
+import { normalizarPagamentoConfig, resolverPagamento } from './pagamento'
 import type { Client, CompanySettings, PublicProposal, Proposal } from '@/types/firestore'
 
 export interface ToPublicSnapshotParams {
@@ -28,7 +28,12 @@ export function toPublicSnapshot(params: ToPublicSnapshotParams): PublicProposal
   }
 
   const precoFinal = proposal.precificacao.precoFinal
-  const pagamento = simularPagamento(precoFinal, taxaCartaoMensal, parcelasCartao, taxaFinanciamentoMensal, parcelasFinanciamento, proposal.entrada.contaAtual)
+  const { pagamento } = resolverPagamento(
+    normalizarPagamentoConfig(proposal.pagamento),
+    precoFinal,
+    { taxaCartaoMensal, parcelasCartao, taxaFinanciamentoMensal, parcelasFinanciamento },
+    proposal.entrada.contaAtual,
+  )
 
   return {
     publicId: proposal.publicId,
@@ -87,10 +92,7 @@ export function toPublicSnapshot(params: ToPublicSnapshotParams): PublicProposal
     },
     precoFinal,
     condicoesPagamento: proposal.condicoesPagamento,
-    pagamento: {
-      cartao: { parcelas: parcelasCartao, valor: pagamento.parcelaCartao },
-      financiamento: { parcelas: parcelasFinanciamento, valor: pagamento.parcelaFinanciamento },
-    },
+    pagamento,
     empresa: {
       nome: company.nome,
       parceria: company.parceria,

@@ -1,20 +1,22 @@
-import { ChevronLeft, ChevronRight, Copy, Download, MessageCircle } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Copy, Download, MessageCircle, Trash2 } from 'lucide-react'
+import { motion, useReducedMotion } from 'motion/react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { Button } from '@/components/ui/Button'
+import { useToast } from '@/components/ui/Toast'
 import { Sheet } from '@/components/ui/Sheet'
 import { SavedIndicator, type SaveStatus } from '@/components/ui/SavedIndicator'
 import { SunLogo } from '@/components/ui/SunLogo'
 import { subscribeCatalog } from '@/lib/data/catalog'
 import { subscribeKits } from '@/lib/data/kits'
 import { subscribeClients } from '@/lib/data/clients'
-import { criarPropostaVazia, createProposal, publicarProposta, saveProposalFields, subscribeProposal } from '@/lib/data/proposals'
+import { criarPropostaVazia, createProposal, moverPropostaParaLixeira, publicarProposta, restaurarProposta, saveProposalFields, subscribeProposal } from '@/lib/data/proposals'
 import { getCalcSettings, getCompanySettings } from '@/lib/data/settings'
 import { calcularResultadosProposta } from '@/lib/calc/proposalResultados'
 import { toPublicSnapshot } from '@/lib/calc/toPublicSnapshot'
 import { useDebouncedEffect } from '@/lib/useDebouncedEffect'
 import { formatBRL } from '@/lib/format'
-import type { CalcSettings, CatalogItem, Client, CompanySettings, Kit, Proposal, ProposalEntrada, ProposalItem, ProposalPrecificacao, ProposalServicos, ProposalSistema, PublicProposal } from '@/types/firestore'
+import type { CalcSettings, CatalogItem, Client, CompanySettings, Kit, Proposal, ProposalEntrada, ProposalItem, ProposalPagamentoConfig, ProposalPrecificacao, ProposalServicos, ProposalSistema, PublicProposal } from '@/types/firestore'
 import { ClienteStep } from './steps/ClienteStep'
 import { ConsumoStep } from './steps/ConsumoStep'
 import { SistemaStep } from './steps/SistemaStep'
@@ -44,6 +46,7 @@ interface EditorDraft {
   servicos: ProposalServicos
   precificacao: ProposalPrecificacao
   condicoesPagamento: string
+  pagamento: ProposalPagamentoConfig
 }
 
 function draftFromProposal(p: Proposal): EditorDraft {
@@ -56,6 +59,7 @@ function draftFromProposal(p: Proposal): EditorDraft {
     servicos: p.servicos,
     precificacao: p.precificacao,
     condicoesPagamento: p.condicoesPagamento,
+    pagamento: p.pagamento,
   }
 }
 
@@ -70,10 +74,22 @@ export function ProposalEditorPage() {
   const [clients, setClients] = useState<Client[]>([])
   const [catalogo, setCatalogo] = useState<CatalogItem[]>([])
   const [kits, setKits] = useState<Kit[]>([])
-  const [step, setStep] = useState(0)
+  const [step, setStepState] = useState(0)
+  const [direcao, setDirecao] = useState(1)
+  const reduzirMovimento = useReducedMotion()
+  const setStep = (proximo: number | ((atual: number) => number)) => {
+    setStepState((atual) => {
+      const valor = typeof proximo === 'function' ? proximo(atual) : proximo
+      setDirecao(valor >= atual ? 1 : -1)
+      return valor
+    })
+  }
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle')
   const [resumoAberto, setResumoAberto] = useState(false)
   const [gerando, setGerando] = useState(false)
+  const [baixandoPdf, setBaixandoPdf] = useState(false)
+  const mostrarToast = useToast()
+  const excluida = useRef(false)
 
   const carregouDraft = useRef(false)
 
@@ -141,7 +157,7 @@ export function ProposalEditorPage() {
   // Autosave com debounce curto a cada alteração do rascunho.
   useDebouncedEffect(
     () => {
-      if (!id || !draft) return
+      if (!id || !draft || excluida.current) return
       setSaveStatus('saving')
       saveProposalFields(id, {
         clientId: draft.clientId,
@@ -152,6 +168,7 @@ export function ProposalEditorPage() {
         servicos: draft.servicos,
         precificacao: { ...draft.precificacao, precoFinal },
         condicoesPagamento: draft.condicoesPagamento,
+        pagamento: draft.pagamento,
       })
         .then(() => setSaveStatus('saved'))
         .catch(() => setSaveStatus('error'))
@@ -178,6 +195,39 @@ export function ProposalEditorPage() {
       return null
     }
   }, [proposal, draft, company, calc, resultados, precoFinal, clients])
+
+  async function moverParaLixeira() {
+    if (!proposal) return
+    excluida.current = true
+    try {
+      await moverPropostaParaLixeira(proposal)
+    } catch (e) {
+      excluida.current = false
+      console.error(e)
+      alert('Não foi possível apagar agora. Tente de novo.')
+      return
+    }
+    const alvo = proposal
+    mostrarToast({
+      mensagem: `${alvo.numero || 'Rascunho'} foi para a lixeira`,
+      acao: { rotulo: 'Desfazer', onClick: () => restaurarProposta(alvo) },
+    })
+    navigate('/app/propostas', { replace: true })
+  }
+
+  async function baixarPdfPrevia() {
+    if (!previewPublico || baixandoPdf) return
+    setBaixandoPdf(true)
+    try {
+      const { downloadProposalPdf } = await import('@/features/pdf/downloadProposalPdf')
+      await downloadProposalPdf(previewPublico)
+    } catch (e) {
+      console.error(e)
+      alert('Não foi possível gerar o PDF agora. Tente novamente em instantes.')
+    } finally {
+      setBaixandoPdf(false)
+    }
+  }
 
   async function handleGerarProposta() {
     if (!id) return
@@ -207,8 +257,33 @@ export function ProposalEditorPage() {
           <h1 className="text-xl font-extrabold text-graphite">{proposal.numero || 'Nova proposta'}</h1>
           <p className="text-xs text-muted">{draft.clienteNome || 'Sem cliente selecionado'}</p>
         </div>
-        <SavedIndicator status={saveStatus} />
+        <div className="flex items-center gap-2">
+          <SavedIndicator status={saveStatus} />
+          <button
+            type="button"
+            onClick={moverParaLixeira}
+            aria-label="Mover para a lixeira"
+            title="Mover para a lixeira"
+            className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-full text-muted transition-colors hover:bg-danger-soft hover:text-danger focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sun"
+          >
+            <Trash2 className="h-4 w-4" aria-hidden />
+          </button>
+        </div>
       </div>
+
+
+      {proposal.excluidoEm && (
+        <div className="mb-4 flex flex-col gap-2 rounded-card bg-danger-soft p-4 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm font-semibold text-danger">Esta proposta está na lixeira. O link do cliente está fora do ar.</p>
+          <button
+            type="button"
+            onClick={() => restaurarProposta(proposal).then(() => mostrarToast({ mensagem: 'Proposta restaurada' }))}
+            className="shrink-0 cursor-pointer rounded-button bg-graphite px-4 py-2 text-xs font-bold text-on-dark"
+          >
+            Restaurar
+          </button>
+        </div>
+      )}
 
       <Stepper steps={STEPS} current={step} onSelect={setStep} />
 
@@ -221,7 +296,13 @@ export function ProposalEditorPage() {
       )}
 
       <div className="flex gap-8">
-        <div className="min-w-0 flex-1 pb-24 lg:pb-0">
+        <motion.div
+          key={step}
+          className="min-w-0 flex-1 pb-24 lg:pb-0"
+          initial={reduzirMovimento ? { opacity: 0 } : { opacity: 0, x: direcao * 16 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={reduzirMovimento ? { duration: 0.15 } : { type: 'spring', bounce: 0, duration: 0.35 }}
+        >
           {step === 0 && <ClienteStep clients={clients} clientId={draft.clientId} onSelect={(c) => setDraft({ ...draft, clientId: c.id, clienteNome: c.nome })} />}
           {step === 1 && <ConsumoStep entrada={draft.entrada} onChange={(entrada) => setDraft({ ...draft, entrada })} />}
           {step === 2 && (
@@ -255,13 +336,15 @@ export function ProposalEditorPage() {
               contaAtual={draft.entrada.contaAtual}
               condicoesPagamento={draft.condicoesPagamento}
               onChangeCondicoesPagamento={(v) => setDraft({ ...draft, condicoesPagamento: v })}
+              pagamento={draft.pagamento}
+              onChangePagamento={(pagamento) => setDraft({ ...draft, pagamento })}
             />
           )}
           {step === 6 && previewPublico && (
             <div className="flex flex-col gap-4">
               <h2 className="text-lg font-bold text-graphite">Revisão</h2>
               <div className="overflow-hidden rounded-card shadow-card">
-                <ProposalView proposal={previewPublico} preview />
+                <ProposalView proposal={previewPublico} preview onBaixarPdf={baixarPdfPrevia} baixandoPdf={baixandoPdf} />
               </div>
               <div className="flex flex-col gap-3 sm:flex-row">
                 <Button variant="secondary" onClick={() => setSaveStatus('saved')} className="sm:w-auto">
@@ -284,7 +367,7 @@ export function ProposalEditorPage() {
               </Button>
             )}
           </div>
-        </div>
+        </motion.div>
 
         {/* Resumo — computador */}
         <aside className="hidden w-80 shrink-0 lg:block">
@@ -303,7 +386,7 @@ export function ProposalEditorPage() {
           <p className="text-[11px] font-semibold text-muted">Preço</p>
           <p className="tabular-nums text-base font-extrabold text-graphite">{formatBRL(precoFinal, false)}</p>
         </div>
-        <button onClick={() => setResumoAberto(true)} className="rounded-button bg-graphite px-4 py-2.5 text-sm font-bold text-ivory">
+        <button onClick={() => setResumoAberto(true)} className="rounded-button bg-graphite px-4 py-2.5 text-sm font-bold text-on-dark">
           Ver resumo
         </button>
       </div>

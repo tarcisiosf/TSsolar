@@ -1,7 +1,7 @@
 import type { CalcSettings, ProposalEntrada, ProposalPrecificacao, ProposalResultados, ProposalServicos, ProposalSistema } from '@/types/firestore'
 import { calcularCenario, calcularCustoKwhGerado } from './cenarios'
 import { calcularConsumoMedioMensal } from './consumo'
-import { calcularContaComSistemaMes, calcularContaSemSistemaMes, percentualFioBPorAno } from './contaComSistema'
+import { calcularContaSemSistemaMes } from './contaComSistema'
 import { calcularPesoEstimado, calcularRelacaoCcCa } from './dimensionamento'
 import { gerarGeracaoMensal } from './geracao'
 import { calcularPrecificacao } from './precificacao'
@@ -14,6 +14,7 @@ export interface CalcularResultadosPropostaInput {
   inversorPotenciaKw: number
   pesoKgModulo: number | null
   calc: CalcSettings
+  /** Mantido por compatibilidade com quem chama; o cálculo atual não depende do ano calendário. */
   anoCalendarioInicial: number
 }
 
@@ -24,7 +25,7 @@ export interface CalcularResultadosPropostaSaida {
 
 /** Junta todos os módulos de cálculo (consumo, geração, cenários, precificação) para uma proposta completa. */
 export function calcularResultadosProposta(input: CalcularResultadosPropostaInput): CalcularResultadosPropostaSaida {
-  const { entrada, sistema, servicos, precificacao, inversorPotenciaKw, pesoKgModulo, calc, anoCalendarioInicial } = input
+  const { entrada, sistema, servicos, precificacao, inversorPotenciaKw, pesoKgModulo, calc } = input
 
   const consumoMedioMensal = calcularConsumoMedioMensal(entrada)
   const consumoMensalKwh = entrada.consumoMensalKwh ?? new Array(12).fill(consumoMedioMensal)
@@ -46,13 +47,8 @@ export function calcularResultadosProposta(input: CalcularResultadosPropostaInpu
     produtividadeKwhKwpAno: calc.produtividadeKwhKwpAno,
     distribuicaoMensal: calc.distribuicaoMensal,
     tarifaKwh: entrada.tarifaKwh,
-    fioBKwh: calc.fioBKwh,
-    fioBPercentualPorAno: calc.fioBPercentualPorAno,
-    anoCalendarioInicial,
-    fatorSimultaneidade: calc.fatorSimultaneidade,
     ligacao: entrada.ligacao,
-    custoDisponibilidadeKwh: calc.custoDisponibilidadeKwh,
-    iluminacaoPublica: calc.iluminacaoPublica,
+    taxaMinimaReais: calc.taxaMinimaReais,
     degradacaoAnual: calc.degradacaoAnual,
     horizonteAnos: calc.horizonteAnos,
     precoFinal: precificacaoResultado.precoFinal,
@@ -64,25 +60,18 @@ export function calcularResultadosProposta(input: CalcularResultadosPropostaInpu
   const geracaoMediaMensalKwh = (sistema.potenciaKwp * calc.produtividadeKwhKwpAno) / 12
   const custoKwhGerado = calcularCustoKwhGerado(precificacaoResultado.precoFinal, conservador.geracaoTotalKwh)
 
-  // Conta "antes x depois" do ano 1, para a manchete de economia real da proposta pública.
+  // Conta "antes x depois" do ano 1, para a manchete da proposta pública. Com o sistema, a conta
+  // passa a ser a taxa mínima da distribuidora (R$ configurado por tipo de ligação) — mais o consumo
+  // que a geração não cobrir, se o sistema for menor que o consumo. A iluminação pública fica de fora
+  // dos dois lados, porque não muda com o sistema.
   const geracaoMensalAno1 = gerarGeracaoMensal(sistema.potenciaKwp, calc.produtividadeKwhKwpAno, calc.distribuicaoMensal, 1, calc.degradacaoAnual)
-  const percentualFioBAno1 = percentualFioBPorAno(anoCalendarioInicial, calc.fioBPercentualPorAno)
+  const taxaMinima = calc.taxaMinimaReais[entrada.ligacao] ?? 0
   let contaAntesTotal = 0
   let contaDepoisTotal = 0
   for (let mes = 0; mes < 12; mes++) {
     const consumoMes = consumoMensalKwh[mes] ?? 0
-    contaAntesTotal += calcularContaSemSistemaMes(consumoMes, entrada.tarifaKwh, calc.iluminacaoPublica)
-    contaDepoisTotal += calcularContaComSistemaMes({
-      consumoKwh: consumoMes,
-      geracaoKwh: geracaoMensalAno1[mes],
-      tarifaKwh: entrada.tarifaKwh,
-      fioBKwh: calc.fioBKwh,
-      percentualFioB: percentualFioBAno1,
-      fatorSimultaneidade: calc.fatorSimultaneidade,
-      ligacao: entrada.ligacao,
-      custoDisponibilidadeKwh: calc.custoDisponibilidadeKwh,
-      iluminacaoPublica: calc.iluminacaoPublica,
-    })
+    contaAntesTotal += calcularContaSemSistemaMes(consumoMes, entrada.tarifaKwh, 0)
+    contaDepoisTotal += taxaMinima + Math.max(consumoMes - geracaoMensalAno1[mes], 0) * entrada.tarifaKwh
   }
   const contaAntesMediaMensal = contaAntesTotal / 12
   const contaDepoisMediaMensal = contaDepoisTotal / 12

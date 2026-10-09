@@ -27,12 +27,22 @@ export function Stepper({ steps, current, onSelect }: { steps: StepDef[]; curren
             <button
               key={step.id}
               onClick={() => onSelect(i)}
-              className={`flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-pill px-3 py-1.5 text-xs font-bold transition-colors
+              aria-current={ativo ? 'step' : undefined}
+              className={`relative flex shrink-0 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-pill px-3 py-1.5 text-xs font-bold transition-colors
                 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sun
-                ${ativo ? 'bg-graphite text-ivory' : concluido ? 'bg-chip text-graphite' : 'text-muted'}`}
+                ${ativo ? 'text-on-dark' : concluido ? 'bg-chip text-graphite' : 'text-muted hover:text-graphite'}`}
             >
-              {concluido ? <Check className="h-3 w-3" aria-hidden /> : <span>{i + 1}.</span>}
-              {step.label}
+              {ativo && (
+                <motion.span
+                  layoutId="etapa-ativa"
+                  className="absolute inset-0 rounded-pill bg-graphite"
+                  transition={shouldReduceMotion ? { duration: 0.15 } : { type: 'spring', bounce: 0, duration: 0.35 }}
+                />
+              )}
+              <span className="relative flex items-center gap-1.5">
+                {concluido ? <Check className="h-3 w-3 text-success" aria-hidden /> : <span>{i + 1}.</span>}
+                {step.label}
+              </span>
             </button>
           )
         })}

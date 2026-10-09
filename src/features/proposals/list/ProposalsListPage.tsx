@@ -1,15 +1,17 @@
-import { Copy, Download, ExternalLink, FileText, Plus, Search } from 'lucide-react'
+import { Copy, Download, ExternalLink, FileText, Plus, Search, Trash2 } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui/Button'
+import { useToast } from '@/components/ui/Toast'
 import { Card } from '@/components/ui/Card'
+import { Stagger, StaggerItem } from '@/components/motion/Motion'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { Select } from '@/components/ui/Select'
 import { SkeletonRow } from '@/components/ui/Skeleton'
 import { StatusPropostaChip } from '@/components/ui/Chip'
 import { PageHeader } from '@/components/layout/PageHeader'
-import { formatBRL, formatDateBR, formatKwp } from '@/lib/format'
-import { duplicateProposal, subscribeProposals, updateProposalStatus } from '@/lib/data/proposals'
+import { dataDoTimestamp, formatBRL, formatDateBR, formatKwp } from '@/lib/format'
+import { duplicateProposal, moverPropostaParaLixeira, restaurarProposta, subscribeProposals, updateProposalStatus } from '@/lib/data/proposals'
 import { getClient } from '@/lib/data/clients'
 import { getCalcSettings, getCompanySettings } from '@/lib/data/settings'
 import { toPublicSnapshot } from '@/lib/calc/toPublicSnapshot'
@@ -30,6 +32,7 @@ export function ProposalsListPage() {
   const [status, setStatus] = useState<StatusProposta | 'todas'>('todas')
   const [calc, setCalc] = useState<CalcSettings | null>(null)
   const [company, setCompany] = useState<CompanySettings | null>(null)
+  const mostrarToast = useToast()
 
   useEffect(() => subscribeProposals(setPropostas), [])
   useEffect(() => {
@@ -46,6 +49,19 @@ export function ProposalsListPage() {
       return bateStatus && bateBusca
     })
   }, [propostas, busca, status])
+
+  async function handleApagar(p: Proposal) {
+    try {
+      await moverPropostaParaLixeira(p)
+      mostrarToast({
+        mensagem: `${p.numero || 'Rascunho'} foi para a lixeira`,
+        acao: { rotulo: 'Desfazer', onClick: () => restaurarProposta(p) },
+      })
+    } catch (e) {
+      console.error(e)
+      alert('Não foi possível apagar agora. Tente de novo.')
+    }
+  }
 
   async function handleDuplicar(id: string) {
     const novoId = await duplicateProposal(id)
@@ -115,14 +131,15 @@ export function ProposalsListPage() {
         />
       )}
 
-      <div className="flex flex-col gap-3">
+      <Stagger className="flex flex-col gap-3" gap={0.04}>
         {filtradas.map((p) => (
-          <Card key={p.id}>
+          <StaggerItem key={p.id}>
+          <Card className="transition-shadow hover:shadow-[0_6px_20px_rgba(15,27,45,0.07)]">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <Link to={`/app/propostas/${p.id}`} className="min-w-0 flex-1">
                 <p className="truncate text-sm font-bold text-graphite">{p.numero || 'Rascunho sem número'}</p>
                 <p className="truncate text-xs text-muted">
-                  {p.clienteNome || 'Sem cliente'} · {formatKwp(p.sistema.potenciaKwp)} · {formatDateBR(p.criadoEm.toDate())}
+                  {p.clienteNome || 'Sem cliente'} · {formatKwp(p.sistema.potenciaKwp)} · {formatDateBR(dataDoTimestamp(p.criadoEm))}
                 </p>
               </Link>
               <div className="flex items-center gap-4">
@@ -160,10 +177,18 @@ export function ProposalsListPage() {
                   </button>
                 </>
               )}
+              <button
+                onClick={() => handleApagar(p)}
+                className="ml-auto flex cursor-pointer items-center gap-1 rounded-pill px-2 py-1 text-xs font-bold text-muted transition-colors hover:bg-danger-soft hover:text-danger"
+              >
+                <Trash2 className="h-3.5 w-3.5" aria-hidden /> Apagar
+              </button>
             </div>
           </Card>
+          </StaggerItem>
         ))}
-      </div>
+      </Stagger>
+
     </div>
   )
 }

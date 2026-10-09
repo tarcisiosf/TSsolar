@@ -2,6 +2,7 @@ import { Package, Plus } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
+import { Stagger, StaggerItem } from '@/components/motion/Motion'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { SkeletonRow } from '@/components/ui/Skeleton'
 import { subscribeKits } from '@/lib/data/kits'
@@ -50,9 +51,10 @@ export function KitsTab({ catalogo }: { catalogo: CatalogItem[] }) {
         />
       )}
 
-      <div className="flex flex-col gap-3">
+      <Stagger className="flex flex-col gap-3" gap={0.04}>
         {kits?.map((kit) => (
-          <Card key={kit.id} onClick={() => abrirEdicao(kit)} className="cursor-pointer">
+          <StaggerItem key={kit.id}>
+          <Card onClick={() => abrirEdicao(kit)} className="cursor-pointer transition-shadow hover:shadow-[0_6px_20px_rgba(15,27,45,0.07)] active:scale-[0.99]">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
                 <p className="truncate text-sm font-bold text-graphite">{kit.nome}</p>
@@ -62,8 +64,9 @@ export function KitsTab({ catalogo }: { catalogo: CatalogItem[] }) {
             </div>
             {kit.descricao && <p className="mt-2 text-xs text-muted">{kit.descricao}</p>}
           </Card>
+          </StaggerItem>
         ))}
-      </div>
+      </Stagger>
 
       <KitSheet key={kitEditando?.id ?? 'novo'} open={sheetAberta} onClose={() => setSheetAberta(false)} kit={kitEditando} catalogo={catalogo} />
     </div>
